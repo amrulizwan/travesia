@@ -17,9 +17,10 @@ const userSchema = new mongoose.Schema({
     enum: ['aktif', 'nonaktif', 'banned'],
     default: 'aktif',
   },
+  resetPasswordOTP: String,
+  resetPasswordExpires: Date,
   tempatWisata: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Wisata' }],
   favoritWisata: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Wisata' }],
-
   createdAt: { type: Date, default: Date.now },
 });
 
