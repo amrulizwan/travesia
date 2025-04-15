@@ -5,7 +5,7 @@ import { sendResetOTP } from '../utils/mailer.js';
 
 export const register = async (req, res) => {
   try {
-    const { nama, email, password, telepon, alamat, role } = req.body;
+    const { nama, email, password, role } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: 'Email sudah digunakan' });
@@ -25,8 +25,6 @@ export const register = async (req, res) => {
       nama,
       email,
       password: hashedPassword,
-      telepon,
-      alamat,
       fotoProfil,
       role: finalRole,
     });
