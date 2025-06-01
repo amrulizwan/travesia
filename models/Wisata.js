@@ -16,11 +16,15 @@ const wisataSchema = new mongoose.Schema({
     default: 'buka',
   },
   fasilitas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Fasilitas' }],
-  hargaTiket: {
-    dewasa: { type: Number, required: true },
-    anakAnak: { type: Number, required: true },
-    promo: { type: Number, default: 0 },
-  },
+  // Old hargaTiket field removed
+  ticketTypes: [
+    {
+      _id: { type: mongoose.Schema.Types.ObjectId, auto: true }, // Auto-generated ID for each ticket type
+      name: { type: String, required: true }, // e.g., "Dewasa", "Anak-Anak", "Pelajar", "VIP"
+      price: { type: Number, required: true, min: 0 },
+      description: { type: String }, // Optional description
+    }
+  ],
   galeri: [
     {
       url: { type: String, required: true },

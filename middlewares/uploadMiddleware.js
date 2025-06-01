@@ -40,4 +40,5 @@ export const audioUpload = createMulterUpload(process.env.CLOUDFLARE_AUDIO_BUCKE
 export const fileUpload = createMulterUpload(process.env.CLOUDFLARE_FILE_BUCKET);
 export const profileUpload = createMulterUpload(process.env.CLOUDFLARE_PROFILE_BUCKET);
 export const iconsUpload = createMulterUpload(process.env.CLOUDFLARE_ICON_BUCKET);
+export const galleryUpload = createMulterUpload(process.env.CLOUDFLARE_GALLERY_BUCKET); // Added for gallery images
 export { s3 };
