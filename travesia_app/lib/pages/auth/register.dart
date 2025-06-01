@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travesia_app/pages/auth/login.dart';
+import 'package:travesia_app/services/api_service.dart'; // Added ApiService import
 import 'package:travesia_app/services/auth_service.dart';
 import 'package:travesia_app/utils/alert_utils.dart';
 
@@ -13,6 +14,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   late final AuthService _authService;
+  late final ApiService _apiService; // Added ApiService instance
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -25,11 +27,8 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void initState() {
     super.initState();
-    _initializeAuthService();
-  }
-
-  Future<void> _initializeAuthService() async {
-    _authService = await AuthService.init();
+    _apiService = ApiService(); // Instantiate ApiService
+    _authService = AuthService(_apiService); // Provide ApiService to AuthService
   }
 
   @override
@@ -51,23 +50,29 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _isLoading = true);
 
     try {
+      // Providing default values for 'telepon' and 'role' as they are not in the form
+      // In a real app, 'telepon' should be a form field.
       final result = await _authService.register(
-        nama: _nameController.text,
-        email: _emailController.text,
-        password: _passwordController.text,
+        _nameController.text,
+        _emailController.text,
+        _passwordController.text,
+        '0000000000', // Default phone number
+        'user',       // Default role
       );
 
       if (!mounted) return;
 
-      if (result['success']) {
-        AlertUtils.showSuccess(context, result['message']);
+      if (result['success'] == true) {
+        AlertUtils.showSuccess(context, result['message'] ?? 'Registration successful! Please login.');
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       } else {
-        AlertUtils.showError(context, result['message']);
+        AlertUtils.showError(context, result['message'] ?? 'Registration failed. Please try again.');
       }
+    } catch (e) {
+      if (mounted) AlertUtils.showError(context, 'An unexpected error occurred: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

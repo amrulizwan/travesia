@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:travesia_app/services/auth_service.dart';
 import 'package:travesia_app/pages/auth/login.dart';
 import 'package:travesia_app/utils/alert_utils.dart';
+import 'package:travesia_app/pages/wisata/wisata_list_page.dart'; // Import WisataListPage
+import 'package:travesia_app/pages/ticket/my_tickets_page.dart'; // Import MyTicketsPage
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,6 +28,17 @@ class _HomePageState extends State<HomePage> {
     {'name': 'NTB', 'image': 'assets/images/sembalun.png'},
     {'name': 'Sumbawa', 'image': 'assets/images/slide1.png'},
   ];
+
+  // New item for navigating to WisataListPage
+  final Map<String, dynamic> _allWisataNavigationItem = {
+    'name': 'Semua Wisata',
+    'icon': Icons.tour_outlined,
+  };
+
+  final Map<String, dynamic> _myTicketsNavigationItem = {
+    'name': 'Tiket Saya',
+    'icon': Icons.confirmation_number_outlined,
+  };
 
   AuthService? _authService;
   bool _isLoading = false;
@@ -208,34 +221,50 @@ class _HomePageState extends State<HomePage> {
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 4,
-                          crossAxisSpacing: 24,
+                          crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),
-                        itemCount: destinations.length + 1,
+                        itemCount: destinations.length + 3, // +1 More, +1 Semua Wisata, +1 Tiket Saya
                         itemBuilder: (context, index) {
-                          if (index == destinations.length) {
-                            return Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.grid_view,
-                                    color: Colors.red,
-                                  ),
-                                  Text(
-                                    'More',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ],
+                          if (index == 0) { // "Semua Wisata"
+                            return _buildGridNavigationItem(
+                              _allWisataNavigationItem['name'] as String,
+                              _allWisataNavigationItem['icon'] as IconData,
+                              () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WisataListPage())),
+                            );
+                          }
+                          if (index == 1) { // "Tiket Saya"
+                            return _buildGridNavigationItem(
+                              _myTicketsNavigationItem['name'] as String,
+                              _myTicketsNavigationItem['icon'] as IconData,
+                              () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyTicketsPage())),
+                            );
+                          }
+
+                          // Adjust index for destinations and "More" button
+                          final itemIndex = index - 2;
+
+                          if (itemIndex == destinations.length) { // "More" button
+                            return InkWell(
+                              onTap: () { /* TODO: Implement 'More' functionality */ },
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  color: Colors.grey[200],
+                                ),
+                                child: const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.grid_view, color: Colors.black54),
+                                    SizedBox(height: 4),
+                                    Text('More', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                                  ],
+                                ),
                               ),
                             );
                           }
+                          // Regular destination items
                           return Column(
                             children: [
                               Expanded(
@@ -243,8 +272,7 @@ class _HomePageState extends State<HomePage> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(10),
                                     image: DecorationImage(
-                                      image: AssetImage(
-                                          destinations[index]['image']!),
+                                      image: AssetImage(destinations[itemIndex]['image']!),
                                       fit: BoxFit.cover,
                                     ),
                                   ),
@@ -252,14 +280,17 @@ class _HomePageState extends State<HomePage> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                destinations[index]['name']!,
+                                destinations[itemIndex]['name']!,
                                 style: const TextStyle(fontSize: 12),
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           );
                         },
                       ),
                     ),
+                    const SizedBox(height: 16), // Added spacing before articles
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Column(
@@ -341,6 +372,36 @@ class _HomePageState extends State<HomePage> {
             label: 'Profile',
           ),
         ],
+      ),
+    );
+  }
+
+  // Helper widget for grid navigation items for cleaner code
+  Widget _buildGridNavigationItem(String name, IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.red[50],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.red, size: 30),
+            const SizedBox(height: 4),
+            Text(
+              name,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.red,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

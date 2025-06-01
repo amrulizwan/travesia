@@ -1,228 +1,172 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'api_service.dart'; // Ensure this path is correct
+import '../models/user.dart'; // Ensure this path is correct
 
 class AuthService {
-  static const String baseUrl = 'https://v2.aisadev.id/api';
-  static const String tokenKey = 'auth_token';
-  static const String refreshTokenKey = 'refresh_token';
-  static const String userKey = 'user_data';
+  final ApiService _apiService;
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final String _tokenKey = 'auth_token';
+  final String _userKey = 'auth_user';
 
-  final SharedPreferences _prefs;
+  AuthService(this._apiService);
 
-  AuthService(this._prefs);
-
-  static Future<AuthService> init() async {
-    final prefs = await SharedPreferences.getInstance();
-    return AuthService(prefs);
-  }
-
-  Future<Map<String, dynamic>> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<Map<String, dynamic>> register(
+      String nama, String email, String password, String telepon, String role) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
-      );
+      final response = await _apiService.post('auth/register', {
+        'nama': nama,
+        'email': email,
+        'password': password,
+        'telepon': telepon,
+        'role': role,
+      });
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-        await _saveAuthData(
-          data['token'],
-          data['refreshToken'],
-          data['user'],
-        );
-
-        return {
-          'success': true,
-          'message': data['message'],
-          'user': data['user'],
-        };
+      // Assuming the API returns user and token upon successful registration
+      if (response != null && response['token'] != null && response['user'] != null) {
+        await _saveAuthData(response['token'], response['user']);
+        _apiService.setAuthToken(response['token']);
+        return {'success': true, 'user': User.fromJson(response['user']), 'token': response['token']};
       } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Terjadi kesalahan',
-        };
+        return {'success': false, 'message': response['message'] ?? 'Registration failed: No token or user data in response'};
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan pada server',
-      };
+      String rawMessage = e.toString();
+      // Remove "Exception: " prefix if present
+      if (rawMessage.startsWith("Exception: ")) {
+        rawMessage = rawMessage.substring("Exception: ".length);
+      }
+
+      // Attempt to parse status code if ApiService includes it like "STATUS_CODE: message"
+      String userFriendlyMessage = 'Registrasi gagal: Terjadi kesalahan.';
+      List<String> parts = rawMessage.splitN(': ', 2); // Split only on the first occurrence of ': '
+      if (parts.length == 2) {
+        String statusCode = parts[0];
+        String apiMessage = parts[1];
+
+        if (statusCode == '400') { // Bad Request
+          userFriendlyMessage = 'Registrasi gagal: $apiMessage'; // e.g. Email sudah terdaftar
+        } else if (statusCode == '409') { // Conflict (custom, or could be 400)
+           userFriendlyMessage = 'Registrasi gagal: $apiMessage'; // e.g. Email already exists
+        }
+        // Add more specific status code handling if needed
+        else {
+           userFriendlyMessage = 'Registrasi gagal: $apiMessage';
+        }
+      } else {
+        // If not in "STATUS_CODE: message" format, use the raw message (already cleaned of "Exception: ")
+        userFriendlyMessage = 'Registrasi gagal: $rawMessage';
+      }
+      return {'success': false, 'message': userFriendlyMessage};
     }
   }
 
-  Future<Map<String, dynamic>> register({
-    required String nama,
-    required String email,
-    required String password,
-    String role = 'pengunjung',
-  }) async {
+  Future<Map<String, dynamic>> login(String email, String password) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/register'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'nama': nama,
-          'email': email,
-          'password': password,
-          'role': role,
-        }),
-      );
+      final response = await _apiService.post('auth/login', {
+        'email': email,
+        'password': password,
+      });
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 201) {
-        return {
-          'success': true,
-          'message': data['message'],
-          'user': data['user'],
-        };
+      if (response != null && response['token'] != null && response['user'] != null) {
+        await _saveAuthData(response['token'], response['user']);
+        _apiService.setAuthToken(response['token']);
+        return {'success': true, 'user': User.fromJson(response['user']), 'token': response['token']};
       } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Terjadi kesalahan',
-        };
+        // Handle cases where response might be missing token/user or have an error message
+        return {'success': false, 'message': response['message'] ?? 'Login failed: Invalid response from server'};
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan pada server',
-      };
+      String rawMessage = e.toString();
+      if (rawMessage.startsWith("Exception: ")) {
+        rawMessage = rawMessage.substring("Exception: ".length);
+      }
+
+      String userFriendlyMessage = 'Login gagal: Terjadi kesalahan.';
+      List<String> parts = rawMessage.splitN(': ', 2);
+      if (parts.length == 2) {
+        String statusCode = parts[0];
+        String apiMessage = parts[1];
+
+        if (statusCode == '401') { // Unauthorized
+          userFriendlyMessage = 'Login gagal: Email atau password salah.';
+        } else if (statusCode == '400') { // Bad Request
+          userFriendlyMessage = 'Login gagal: $apiMessage'; // e.g. "Email is required"
+        }
+        // Add more specific status code handling if needed
+        else {
+           userFriendlyMessage = 'Login gagal: $apiMessage';
+        }
+      } else {
+         userFriendlyMessage = 'Login gagal: $rawMessage';
+      }
+      return {'success': false, 'message': userFriendlyMessage};
     }
   }
 
-  Future<void> _saveAuthData(
-    String token,
-    String refreshToken,
-    Map<String, dynamic> userData,
-  ) async {
-    await _prefs.setString(tokenKey, token);
-    await _prefs.setString(refreshTokenKey, refreshToken);
-    await _prefs.setString(userKey, jsonEncode(userData));
+  Future<void> _saveAuthData(String token, Map<String, dynamic> userData) async {
+    await _secureStorage.write(key: _tokenKey, value: token);
+    await _secureStorage.write(key: _userKey, value: jsonEncode(userData));
   }
 
-  // Future<> _getUserInfo(
-  //   String token,
-  //   String refreshToken,
-  //   Map<String, dynamic> userData,
-  // ) async {
-  //   await _prefs.setString(tokenKey, token);
-  //   await _prefs.setString(refreshTokenKey, refreshToken);
-  //   await _prefs.setString(userKey, jsonEncode(userData));
-  // }
+  Future<String?> getToken() async {
+    return await _secureStorage.read(key: _tokenKey);
+  }
 
-  // getu user info that can be used in the app
-
-  Future<Map<String, dynamic>?> getUserInfo() async {
-    try {
-      final userStr = _prefs.getString(userKey);
-      if (userStr == null) return null;
-
-      return jsonDecode(userStr) as Map<String, dynamic>;
-    } catch (e) {
-      return null;
+  Future<User?> getUser() async {
+    final userDataString = await _secureStorage.read(key: _userKey);
+    if (userDataString != null) {
+      try {
+        return User.fromJson(jsonDecode(userDataString));
+      } catch(e) {
+        // If there's an error decoding user (e.g. old format), remove it.
+        await _secureStorage.delete(key: _userKey);
+        return null;
+      }
     }
+    return null;
   }
 
   Future<void> logout() async {
-    await _prefs.remove(tokenKey);
-    await _prefs.remove(refreshTokenKey);
-    await _prefs.remove(userKey);
+    await _secureStorage.delete(key: _tokenKey);
+    await _secureStorage.delete(key: _userKey);
+    _apiService.clearAuthToken();
   }
 
-  bool get isLoggedIn => _prefs.containsKey(tokenKey);
+  Future<bool> isLoggedIn() async {
+    final token = await getToken();
+    if (token != null) {
+      // Optionally: verify token with a lightweight backend call if needed.
+      // For now, just having a token means logged in.
+      _apiService.setAuthToken(token); // Make sure ApiService is aware of the token.
 
-  String? get token => _prefs.getString(tokenKey);
-
-  String? get refreshToken => _prefs.getString(refreshTokenKey);
-
-  Map<String, dynamic>? get userData {
-    final userStr = _prefs.getString(userKey);
-    if (userStr == null) return null;
-    return jsonDecode(userStr) as Map<String, dynamic>;
-  }
-
-  Future<Map<String, dynamic>> requestResetPassword(String email) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/request-reset-password'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'email': email,
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'message': data['message'],
-        };
-      } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Terjadi kesalahan',
-        };
+      // Attempt to load user data. If it fails (e.g., corrupted data),
+      // consider it as not properly logged in, clear storage and return false.
+      User? user = await getUser();
+      if (user == null) {
+        // Token exists but no valid user data, likely an inconsistent state or data corruption.
+        await logout(); // Log out to clear inconsistent state.
+        return false;
       }
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan pada server',
-      };
+      return true;
     }
+    return false;
   }
+}
 
-  Future<Map<String, dynamic>> verifyResetPassword({
-    required String email,
-    required String otp,
-    required String newPassword,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/verify-reset-password'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'email': email,
-          'otp': otp,
-          'newPassword': newPassword,
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'message': data['message'],
-        };
-      } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Terjadi kesalahan',
-        };
+extension StringExtensions on String {
+  List<String> splitN(Pattern pattern, int n) {
+    var parts = <String>[];
+    var current = 0;
+    for (var i = 0; i < n - 1; i++) {
+      var index = indexOf(pattern, current);
+      if (index == -1) {
+        break;
       }
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan pada server',
-      };
+      parts.add(substring(current, index));
+      current = index + pattern.matchAsPrefix(this, index)!.group(0)!.length;
     }
+    parts.add(substring(current));
+    return parts;
   }
 }

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:travesia_app/pages/auth/forgot.dart';
 import 'package:travesia_app/pages/auth/register.dart';
+import 'package:flutter/material.dart';
+import 'package:travesia_app/pages/auth/forgot.dart';
+import 'package:travesia_app/pages/auth/register.dart';
 import 'package:travesia_app/pages/home/home.dart';
+import 'package:travesia_app/services/api_service.dart'; // Added ApiService import
 import 'package:travesia_app/services/auth_service.dart';
 import 'package:travesia_app/utils/alert_utils.dart';
 
@@ -15,6 +19,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   late final AuthService _authService;
+  late final ApiService _apiService; // Added ApiService instance
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -24,11 +29,8 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _initializeAuthService();
-  }
-
-  Future<void> _initializeAuthService() async {
-    _authService = await AuthService.init();
+    _apiService = ApiService(); // Instantiate ApiService
+    _authService = AuthService(_apiService); // Provide ApiService to AuthService
   }
 
   @override
@@ -45,14 +47,16 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final result = await _authService.login(
-        email: _emailController.text,
-        password: _passwordController.text,
+        _emailController.text,
+        _passwordController.text,
       );
 
       if (!mounted) return;
 
-      if (result['success']) {
-        AlertUtils.showSuccess(context, result['message']);
+      if (result['success'] == true) {
+        // Navigate to home page on successful login
+        // Optionally, show a success message if desired, though navigation is primary feedback
+        // AlertUtils.showSuccess(context, 'Login successful!'); // Example success message
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -60,8 +64,12 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       } else {
-        AlertUtils.showError(context, result['message']);
+        // Show error message from authService response
+        AlertUtils.showError(context, result['message'] ?? 'Login failed. Please try again.');
       }
+    } catch (e) {
+      // Catch any other exceptions during the login process
+      if (mounted) AlertUtils.showError(context, 'An unexpected error occurred: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
