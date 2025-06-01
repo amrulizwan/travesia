@@ -14,31 +14,43 @@ class ReviewService {
     String? ticketId, // Optional ticketId
   }) async {
     try {
-      final response = await _apiService.post('reviews', {
-        'id_wisata': wisataId,
+      final Map<String, dynamic> requestBody = {
+        'wisataId': wisataId,
         'rating': rating,
-        'komentar': comment,
-        if (ticketId != null) 'id_tiket': ticketId,
-      });
+        'comment': comment,
+      };
+      if (ticketId != null) {
+        requestBody['ticketId'] = ticketId;
+      }
+      final response = await _apiService.post('reviews', requestBody);
 
-      // Assuming a successful response might look like:
-      // {"success": true, "message": "Review created successfully", "data": reviewObject}
-      // or just {"success": true, "message": "Review created successfully"}
-      if (response != null && response['success'] == true) {
+      // MANUAL_TEST_CASES.md suggests the created review object is returned directly.
+      // _handleResponse in ApiService should decode the JSON.
+      // We assume if '_id' (a common field for MongoDB documents) is present, it's the review object.
+      if (response != null && response['_id'] != null) {
         return {
           'success': true,
-          'message': response['message'] ?? 'Review submitted successfully!',
-          'data': response['data'] != null
-              ? Review.fromJson(response['data'])
-              : null,
+          'message': 'Review submitted successfully!',
+          'data': Review.fromJson(response), // Parse the whole response as Review
         };
+      } else if (response != null && response['message'] != null) {
+        // This case might occur if the backend sends a specific error message
+        // even with a 2xx status, or if _handleResponse is modified to return non-error messages.
+        // However, _handleResponse typically throws an Exception for non-2xx statuses.
+        throw Exception(response['message']);
       } else {
-        throw Exception(response['message'] ??
-            'Failed to submit review: Unknown server response');
+        // Fallback for unexpected successful responses that are not review objects.
+        // This also covers cases where _apiService.post might return null or an empty map
+        // from _handleResponse if the response body was empty (e.g. 204 No Content, though unlikely for POST).
+         return {
+            'success': true, // Or false, depending on how strict we want to be
+            'message': 'Review submitted, but response format was unexpected.',
+            'data': null
+        };
       }
     } catch (e) {
       print('Error in createReview: $e');
-      print('Error in createReview: $e');
+      // The duplicate print was likely a copy-paste error, removing one.
       String rawMessage = e.toString();
       if (rawMessage.startsWith("Exception: ")) {
         rawMessage = rawMessage.substring("Exception: ".length);
@@ -126,6 +138,144 @@ class ReviewService {
 
   // Optional: getMyReviews (can be implemented later if needed)
   // Future<List<Review>> getMyReviews({int page = 1, int limit = 10}) async { ... }
+
+  Future<List<Review>> getMyReviews({int page = 1, int limit = 10}) async {
+    try {
+      final response = await _apiService.get('reviews/my-reviews?page=$page&limit=$limit');
+      // Assuming response structure similar to getReviewsForWisata
+      if (response != null && response['data'] != null) {
+        List<dynamic> reviewData;
+        if (response['data'] is List) {
+          reviewData = response['data'];
+        } else if (response['data'] is Map && response['data']['reviews'] is List) {
+          reviewData = response['data']['reviews'];
+          // Potentially return Map<String, dynamic> for pagination info
+        } else {
+          throw Exception('Unexpected data format for my reviews');
+        }
+        return reviewData.map((json) => Review.fromJson(json)).toList();
+      } else if (response != null && response['message'] != null) {
+        throw Exception('Failed to get my reviews: ${response['message']}');
+      } else {
+        throw Exception('Failed to parse my reviews list or no data found');
+      }
+    } catch (e) {
+      print('Error in getMyReviews: $e');
+      String rawMessage = e.toString();
+      if (rawMessage.startsWith("Exception: ")) {
+        rawMessage = rawMessage.substring("Exception: ".length);
+      }
+      List<String> parts = rawMessage.splitN(': ', 2);
+      String userFriendlyMessage = 'Gagal memuat ulasan Anda: $rawMessage';
+      if (parts.length == 2) {
+        String apiMessage = parts[1];
+        userFriendlyMessage = 'Gagal memuat ulasan Anda: $apiMessage';
+      }
+      throw Exception(userFriendlyMessage);
+    }
+  }
+
+  Future<Review> updateMyReview(String reviewId, int rating, String comment) async {
+    try {
+      final response = await _apiService.put('reviews/$reviewId', {
+        'rating': rating,
+        'comment': comment,
+      });
+      if (response != null && response['_id'] != null) { // Assuming API returns updated review
+        return Review.fromJson(response);
+      } else {
+        throw Exception('Failed to parse updated review or no data returned');
+      }
+    } catch (e) {
+      print('Error in updateMyReview for $reviewId: $e');
+      String rawMessage = e.toString();
+      if (rawMessage.startsWith("Exception: ")) {
+        rawMessage = rawMessage.substring("Exception: ".length);
+      }
+      List<String> parts = rawMessage.splitN(': ', 2);
+      String userFriendlyMessage = 'Gagal memperbarui ulasan: $rawMessage';
+      if (parts.length == 2) {
+        String apiMessage = parts[1];
+        userFriendlyMessage = 'Gagal memperbarui ulasan: $apiMessage';
+      }
+      throw Exception(userFriendlyMessage);
+    }
+  }
+
+  Future<Review> respondToReview(String reviewId, String responseText) async {
+    try {
+      final response = await _apiService.put('reviews/$reviewId/respond', {
+        'responseText': responseText,
+      });
+      if (response != null && response['_id'] != null) { // Assuming API returns updated review
+        return Review.fromJson(response);
+      } else {
+        throw Exception('Failed to parse review response or no data returned');
+      }
+    } catch (e) {
+      print('Error in respondToReview for $reviewId: $e');
+      String rawMessage = e.toString();
+      if (rawMessage.startsWith("Exception: ")) {
+        rawMessage = rawMessage.substring("Exception: ".length);
+      }
+      List<String> parts = rawMessage.splitN(': ', 2);
+      String userFriendlyMessage = 'Gagal menanggapi ulasan: $rawMessage';
+      if (parts.length == 2) {
+        String apiMessage = parts[1];
+        userFriendlyMessage = 'Gagal menanggapi ulasan: $apiMessage';
+      }
+      throw Exception(userFriendlyMessage);
+    }
+  }
+
+  Future<Review> setReviewStatus(String reviewId, String status) async {
+    try {
+      final response = await _apiService.put('reviews/$reviewId/status', {
+        'status': status,
+      });
+      if (response != null && response['_id'] != null) { // Assuming API returns updated review
+        return Review.fromJson(response);
+      } else {
+        throw Exception('Failed to parse set review status response or no data returned');
+      }
+    } catch (e) {
+      print('Error in setReviewStatus for $reviewId: $e');
+      String rawMessage = e.toString();
+      if (rawMessage.startsWith("Exception: ")) {
+        rawMessage = rawMessage.substring("Exception: ".length);
+      }
+      List<String> parts = rawMessage.splitN(': ', 2);
+      String userFriendlyMessage = 'Gagal mengatur status ulasan: $rawMessage';
+      if (parts.length == 2) {
+        String apiMessage = parts[1];
+        userFriendlyMessage = 'Gagal mengatur status ulasan: $apiMessage';
+      }
+      throw Exception(userFriendlyMessage);
+    }
+  }
+
+  Future<void> deleteReview(String reviewId) async {
+    try {
+      await _apiService.delete('reviews/$reviewId');
+      // If _apiService.delete throws an error, it will be caught by the catch block.
+      // If it completes without error, the deletion was successful.
+      print('Review $reviewId deleted successfully.');
+      return;
+    } catch (e) {
+      print('Error in deleteReview for $reviewId: $e');
+      String rawMessage = e.toString();
+      if (rawMessage.startsWith("Exception: ")) {
+        rawMessage = rawMessage.substring("Exception: ".length);
+      }
+      List<String> parts = rawMessage.splitN(': ', 2);
+      String userFriendlyMessage = 'Gagal menghapus ulasan: $rawMessage';
+      if (parts.length == 2) {
+        String apiMessage = parts[1];
+        userFriendlyMessage = 'Gagal menghapus ulasan: $apiMessage';
+      }
+      throw Exception(userFriendlyMessage);
+    }
+  }
 }
 
 // Helper extension from AuthService, assuming it's accessible project-wide or defined in a common utility file.
