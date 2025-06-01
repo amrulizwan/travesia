@@ -7,9 +7,10 @@ import {
   verifikasiGambarGaleri,
   getAllWisata,
   getWisataById,
+  changeWisataPengelola, // Added new function
 } from '../controllers/wisataController.js';
 import { protect, authorizeRoles } from '../middlewares/authMiddleware.js';
-import { galleryUpload }_from '../middlewares/uploadMiddleware.js'; // Assuming galleryUpload is configured in uploadMiddleware.js
+import { galleryUpload } from '../middlewares/uploadMiddleware.js'; // Corrected import and Assuming galleryUpload is configured
 
 const router = express.Router();
 
@@ -47,6 +48,14 @@ router.put(
   protect,
   authorizeRoles('admin'), // Only admin can verify images
   verifikasiGambarGaleri
+);
+
+// Admin: Change Pengelola of a Wisata
+router.put(
+  '/:id/assign-pengelola',
+  protect,
+  authorizeRoles('admin'),
+  changeWisataPengelola
 );
 
 export default router;

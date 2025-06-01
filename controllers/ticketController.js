@@ -4,10 +4,11 @@ import Wisata from '../models/Wisata.js';
 import { snap as midtransSnap } from '../utils/midtrans.js'; // Import Midtrans Snap instance
 import { v4 as uuidv4 } from 'uuid'; // For generating unique order IDs
 
-// Function 1: Create Transaction (Initiate Ticket Purchase)
+// Function 1: Create Transaction (Initiate Ticket Purchase) - MODIFIED
 export const createTransaction = async (req, res) => {
   try {
-    const { wisataId, quantity } = req.body; // quantity: { dewasa: Number, anakAnak: Number }
+    // Expects: { wisataId: String, itemsToPurchase: [{ ticketTypeId: String, quantity: Number }] }
+    const { wisataId, itemsToPurchase } = req.body;
     const userId = req.user._id; // Assuming 'protect' middleware attaches user
 
     if (!mongoose.Types.ObjectId.isValid(wisataId)) {
@@ -18,126 +19,121 @@ export const createTransaction = async (req, res) => {
     if (!wisata) {
       return res.status(404).json({ message: 'Wisata not found' });
     }
-
-    if (!quantity || (quantity.dewasa === undefined && quantity.anakAnak === undefined)) {
-        return res.status(400).json({ message: 'Quantity for dewasa or anakAnak must be provided' });
+    if (!wisata.ticketTypes || wisata.ticketTypes.length === 0) {
+        return res.status(400).json({ message: 'This Wisata currently has no ticket types defined.' });
     }
 
-    const numDewasa = Number(quantity.dewasa) || 0;
-    const numAnak = Number(quantity.anakAnak) || 0;
-
-    if (numDewasa < 0 || numAnak < 0) {
-        return res.status(400).json({ message: 'Quantity cannot be negative' });
-    }
-    if (numDewasa === 0 && numAnak === 0) {
-        return res.status(400).json({ message: 'At least one ticket (dewasa or anakAnak) must be purchased' });
+    if (!Array.isArray(itemsToPurchase) || itemsToPurchase.length === 0) {
+        return res.status(400).json({ message: 'itemsToPurchase array must be provided and cannot be empty.' });
     }
 
-    const totalPrice = (numDewasa * wisata.hargaTiket.dewasa) + (numAnak * wisata.hargaTiket.anakAnak);
-    if (totalPrice <= 0) {
-         return res.status(400).json({ message: 'Total price must be greater than zero. Check ticket prices for Wisata.'});
+    let calculatedTotalPrice = 0;
+    const purchasedItemsDetails = []; // For storing in Ticket model
+    const midtransItemDetails = [];   // For Midtrans API
+
+    for (const item of itemsToPurchase) {
+      if (!item.ticketTypeId || !mongoose.Types.ObjectId.isValid(item.ticketTypeId)) {
+          return res.status(400).json({ message: `Invalid ticketTypeId format: ${item.ticketTypeId}`});
+      }
+      const ticketType = wisata.ticketTypes.id(item.ticketTypeId); // Find subdocument by _id
+      if (!ticketType) {
+        return res.status(400).json({ message: `Ticket type with ID ${item.ticketTypeId} not found for this Wisata.` });
+      }
+      if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+        return res.status(400).json({ message: `Invalid quantity for ticket type ${ticketType.name}. Must be a positive integer.`});
+      }
+
+      calculatedTotalPrice += ticketType.price * item.quantity;
+      purchasedItemsDetails.push({
+        ticketTypeId: ticketType._id, // Store the actual ID from Wisata's ticketTypes
+        name: ticketType.name,
+        priceAtPurchase: ticketType.price,
+        quantity: item.quantity,
+        description: ticketType.description,
+      });
+      midtransItemDetails.push({
+        id: ticketType._id.toString(), // Use ticketType._id as a unique identifier for Midtrans item
+        price: ticketType.price,
+        quantity: item.quantity,
+        name: `${wisata.nama} - ${ticketType.name}`, // Construct a descriptive name
+      });
+    }
+
+    if (calculatedTotalPrice <= 0) {
+        return res.status(400).json({ message: 'Total price must be greater than zero. Check item quantities and ticket prices.' });
     }
 
     const orderId = `TICKET-${uuidv4()}`;
 
-    // Create a new ticket document in 'pending' state
     const newTicket = new Ticket({
       user: userId,
       wisata: wisataId,
       orderId,
-      quantity: { dewasa: numDewasa, anakAnak: numAnak },
-      totalPrice,
+      purchasedItems: purchasedItemsDetails, // Use the new structure
+      totalPrice: calculatedTotalPrice,
       paymentStatus: 'pending',
     });
 
-    // Midtrans transaction parameters
     const midtransParams = {
       transaction_details: {
         order_id: orderId,
-        gross_amount: totalPrice,
+        gross_amount: calculatedTotalPrice,
       },
-      item_details: [],
+      item_details: midtransItemDetails, // Use the new structure
       customer_details: {
-        first_name: req.user.nama, // Assuming user name is 'nama'
+        first_name: req.user.nama,
         email: req.user.email,
-        phone: req.user.telepon || undefined, // Optional
+        phone: req.user.telepon || undefined,
       },
-      // Optional: expiry, page_redirect_url, etc.
     };
-
-    if (numDewasa > 0) {
-        midtransParams.item_details.push({
-            id: `${wisataId}-dewasa`,
-            price: wisata.hargaTiket.dewasa,
-            quantity: numDewasa,
-            name: `${wisata.nama} - Tiket Dewasa`,
-        });
-    }
-    if (numAnak > 0) {
-        midtransParams.item_details.push({
-            id: `${wisataId}-anak`,
-            price: wisata.hargaTiket.anakAnak,
-            quantity: numAnak,
-            name: `${wisata.nama} - Tiket Anak-Anak`,
-        });
-    }
 
     const snapToken = await midtransSnap.createTransactionToken(midtransParams);
 
     newTicket.snapToken = snapToken;
-    // newTicket.transactionId = transaction.transaction_id; // transaction_id is usually available after payment success from notification
     await newTicket.save();
 
     res.status(201).json({
       message: 'Transaction created successfully. Please proceed to payment.',
       orderId,
       snapToken,
-      ticketId: newTicket._id
+      ticketId: newTicket._id,
+      purchasedItems: newTicket.purchasedItems,
+      totalPrice: newTicket.totalPrice
     });
 
   } catch (error) {
     console.error('Create transaction error:', error);
-    // Differentiate Midtrans errors if possible
-    if (error.isMidtransError) {
+    if (error.isMidtransError) { // Check if it's a Midtrans specific error
          return res.status(500).json({ message: 'Midtrans API error', error: error.message, details: error.ApiResponse });
     }
     res.status(500).json({ message: 'Server error while creating transaction', error: error.message });
   }
 };
 
-// Function 2: Handle Midtrans Payment Notification
+// Function 2: Handle Midtrans Payment Notification - No direct changes needed by this task's schema modification
+// but ensure it correctly updates based on orderId.
 export const handleMidtransNotification = async (req, res) => {
   try {
     const notificationJson = req.body;
-    // Use Midtrans library to verify the notification signature for security
-    // This is a crucial step in a production environment.
-    // For now, we'll process based on the notification directly, but add a TODO.
-    // TODO: Implement Midtrans signature verification:
-    // const statusResponse = await midtransSnap.transaction.notification(notificationJson);
-    // const orderId = statusResponse.order_id;
-    // const transactionStatus = statusResponse.transaction_status;
-    // const fraudStatus = statusResponse.fraud_status;
-    // ... proceed with verified data ...
-
+    // TODO: Implement Midtrans signature verification
+    // const statusResponse = await midtransSnap.transaction.notification(notificationJson); // Secure way
+    // For now, direct use (less secure for webhook testing without proper tunnel/verification)
     const orderId = notificationJson.order_id;
     const transactionStatus = notificationJson.transaction_status;
     const fraudStatus = notificationJson.fraud_status;
     const paymentType = notificationJson.payment_type;
-    const transactionId = notificationJson.transaction_id;
+    const transactionId = notificationJson.transaction_id; // Midtrans's transaction_id
 
     const ticket = await Ticket.findOne({ orderId: orderId });
     if (!ticket) {
       return res.status(404).json({ message: 'Ticket with this orderId not found.' });
     }
 
-    // Idempotency: If already processed, just return success
+    // Idempotency checks
     if (ticket.paymentStatus === 'success' && transactionStatus === 'capture' && fraudStatus === 'accept') {
         return res.status(200).json({ message: 'Notification already processed for successful payment.' });
     }
-    if (ticket.paymentStatus === 'failed' && (transactionStatus === 'deny' || transactionStatus === 'expire' || transactionStatus === 'cancel')) {
-        return res.status(200).json({ message: 'Notification already processed for failed/expired payment.' });
-    }
-
+    // Add more idempotency checks if needed for other statuses
 
     let newPaymentStatus = ticket.paymentStatus;
 
@@ -146,11 +142,10 @@ export const handleMidtransNotification = async (req, res) => {
         newPaymentStatus = 'success';
         ticket.paidAt = new Date(notificationJson.settlement_time || Date.now());
       } else if (fraudStatus == 'challenge') {
-        // TODO: Handle 'challenge' status (e.g., mark as 'pending_review')
         newPaymentStatus = 'pending'; // Or a custom status like 'review'
         console.log(`Payment for orderId ${orderId} is challenged by FDS. Needs manual review.`);
       }
-    } else if (transactionStatus == 'settlement') { // 'settlement' also means success
+    } else if (transactionStatus == 'settlement') {
       newPaymentStatus = 'success';
       ticket.paidAt = new Date(notificationJson.settlement_time || Date.now());
     } else if (transactionStatus == 'pending') {
@@ -165,15 +160,10 @@ export const handleMidtransNotification = async (req, res) => {
 
     ticket.paymentStatus = newPaymentStatus;
     ticket.paymentMethod = paymentType;
-    ticket.transactionId = transactionId; // Update with the actual transaction_id from Midtrans
-
-    // Store the raw notification for auditing if needed
-    // ticket.midtransNotificationPayload = notificationJson;
+    ticket.transactionId = transactionId; // Store Midtrans transaction_id
 
     await ticket.save();
-
     console.log(`Payment status for orderId ${orderId} updated to ${newPaymentStatus}.`);
-    // Respond to Midtrans with 200 OK
     res.status(200).json({ message: 'Notification received and processed successfully.' });
 
   } catch (error) {
@@ -182,16 +172,16 @@ export const handleMidtransNotification = async (req, res) => {
   }
 };
 
-// Function 3: Get User's Tickets
+// Function 3: Get User's Tickets - Adjusted to reflect new schema if needed for display
 export const getUserTickets = async (req, res) => {
   try {
     const userId = req.user._id;
     const tickets = await Ticket.find({ user: userId })
-      .populate('wisata', 'nama lokasi hargaTiket') // Populate with selected Wisata details
+      .populate('wisata', 'nama lokasi ticketTypes') // Populate with Wisata name, location, and its available ticketTypes
       .sort({ createdAt: -1 });
 
     if (!tickets.length) {
-      return res.status(404).json({ message: 'No tickets found for this user.' });
+      return res.status(200).json({ message: 'No tickets found for this user.', data: [] });
     }
     res.status(200).json({ data: tickets });
   } catch (error) {
@@ -200,7 +190,7 @@ export const getUserTickets = async (req, res) => {
   }
 };
 
-// Function 4: Get Sales by Wisata (for Admin/Pengelola)
+// Function 4: Get Sales by Wisata (for Admin/Pengelola) - Adjusted for new purchasedItems structure
 export const getSalesByWisata = async (req, res) => {
     try {
         const { wisataId } = req.params;
@@ -214,23 +204,32 @@ export const getSalesByWisata = async (req, res) => {
             return res.status(404).json({ message: 'Wisata not found' });
         }
 
-        // Authorization: Only admin or the pengelola of this wisata can access
-        if (req.user.role !== 'admin' && wisata.pengelola.toString() !== req.user._id.toString()) {
+        if (req.user.role !== 'admin' && (!wisata.pengelola || wisata.pengelola.toString() !== req.user._id.toString())) {
             return res.status(403).json({ message: 'Access denied. You are not the manager of this Wisata or an Admin.' });
         }
 
         const tickets = await Ticket.find({ wisata: wisataId, paymentStatus: 'success' })
-            .populate('user', 'nama email') // Populate with selected user details
+            .populate('user', 'nama email')
             .sort({ createdAt: -1 });
 
         if (!tickets.length) {
-            return res.status(404).json({ message: 'No successful sales found for this Wisata yet.' });
+            return res.status(200).json({
+                message: `No successful sales found for ${wisata.nama} yet.`,
+                totalRevenue: 0,
+                totalTicketsSold: 0,
+                count: 0,
+                data: []
+            });
         }
 
-        // Calculate total revenue for this wisata from successful tickets
         const totalRevenue = tickets.reduce((acc, ticket) => acc + ticket.totalPrice, 0);
-        const totalTicketsSold = tickets.reduce((acc, ticket) => acc + (ticket.quantity.dewasa || 0) + (ticket.quantity.anakAnak || 0), 0);
 
+        let totalTicketsSold = 0;
+        tickets.forEach(ticket => {
+            ticket.purchasedItems.forEach(item => {
+                totalTicketsSold += item.quantity;
+            });
+        });
 
         res.status(200).json({
             message: `Sales data for ${wisata.nama}`,

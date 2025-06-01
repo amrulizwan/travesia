@@ -21,10 +21,16 @@ const ticketSchema = new mongoose.Schema({
     unique: true,
     index: true,
   },
-  quantity: {
-    dewasa: { type: Number, required: true, min: 0 },
-    anakAnak: { type: Number, required: true, min: 0 },
-  },
+  // Old quantity field removed
+  purchasedItems: [
+    {
+      ticketTypeId: { type: mongoose.Schema.Types.ObjectId, required: false }, // Reference to Wisata.ticketTypes._id
+      name: { type: String, required: true }, // Name of the ticket type at time of purchase
+      priceAtPurchase: { type: Number, required: true }, // Price at time of purchase
+      quantity: { type: Number, required: true, min: 1 },
+      description: { type: String } // Optional description from Wisata.ticketTypes
+    }
+  ],
   totalPrice: {
     type: Number,
     required: true,
