@@ -81,7 +81,7 @@ export const requestResetPassword = async (req, res) => {
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 menit
+    const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
     user.resetPasswordOTP = otp;
     user.resetPasswordExpires = otpExpires;
