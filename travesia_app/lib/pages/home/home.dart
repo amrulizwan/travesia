@@ -40,30 +40,43 @@ class _HomePageState extends State<HomePage> {
     'icon': Icons.confirmation_number_outlined,
   };
 
-  AuthService? _authService;
+  late AuthService _authService;
   bool _isLoading = false;
   Map<String, dynamic> userData = {};
+
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
-    getUserData();
-    _initializeAuthService();
+    _initializeAndGetData();
+    _pageController.addListener(() {
+      int next = _pageController.page!.round();
+      if (_currentPage != next) {
+        setState(() {
+          _currentPage = next;
+        });
+      }
+    });
   }
 
-  Future<void> _initializeAuthService() async {
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initializeAndGetData() async {
     _authService = await AuthService.init();
+    await getUserData();
   }
 
   Future<void> _handleLogout() async {
-    if (_authService == null) {
-      await _initializeAuthService();
-    }
-
     setState(() => _isLoading = true);
 
     try {
-      await _authService?.logout();
+      await _authService.logout();
       if (!mounted) return;
 
       Navigator.of(context).pushAndRemoveUntil(
@@ -77,21 +90,18 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void getUserData() async {
-    if (_authService == null) {
-      await _initializeAuthService();
-    }
-
+  Future<void> getUserData() async {
     setState(() => _isLoading = true);
 
     try {
-      final userData = await _authService?.getUserInfo();
+      final userData = await _authService.getUserInfo();
       if (userData != null) {
         setState(() {
           this.userData = userData;
         });
       } else {
-        AlertUtils.showWarning(context, "Sesi anda habis,Silahkan Login!");
+        if (!mounted) return;
+        AlertUtils.showWarning(context, "Sesi anda habis, Silahkan Login!");
         await _handleLogout();
       }
     } finally {
@@ -183,6 +193,7 @@ class _HomePageState extends State<HomePage> {
                     SizedBox(
                       height: 170,
                       child: PageView.builder(
+                        controller: _pageController,
                         itemCount: imageUrls.length,
                         itemBuilder: (context, index) {
                           return Container(
@@ -208,7 +219,9 @@ class _HomePageState extends State<HomePage> {
                           height: 10,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: index == 0 ? Colors.orange : Colors.grey,
+                            color: index == _currentPage
+                                ? Colors.orange
+                                : Colors.grey,
                           ),
                         ),
                       ),
@@ -224,29 +237,43 @@ class _HomePageState extends State<HomePage> {
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),
-                        itemCount: destinations.length + 3, // +1 More, +1 Semua Wisata, +1 Tiket Saya
+                        itemCount: destinations.length +
+                            3, // +1 More, +1 Semua Wisata, +1 Tiket Saya
                         itemBuilder: (context, index) {
-                          if (index == 0) { // "Semua Wisata"
+                          if (index == 0) {
+                            // "Semua Wisata"
                             return _buildGridNavigationItem(
                               _allWisataNavigationItem['name'] as String,
                               _allWisataNavigationItem['icon'] as IconData,
-                              () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WisataListPage())),
+                              () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const WisataListPage())),
                             );
                           }
-                          if (index == 1) { // "Tiket Saya"
+                          if (index == 1) {
+                            // "Tiket Saya"
                             return _buildGridNavigationItem(
                               _myTicketsNavigationItem['name'] as String,
                               _myTicketsNavigationItem['icon'] as IconData,
-                              () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyTicketsPage())),
+                              () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const MyTicketsPage())),
                             );
                           }
 
                           // Adjust index for destinations and "More" button
                           final itemIndex = index - 2;
 
-                          if (itemIndex == destinations.length) { // "More" button
+                          if (itemIndex == destinations.length) {
+                            // "More" button
                             return InkWell(
-                              onTap: () { /* TODO: Implement 'More' functionality */ },
+                              onTap: () {
+                                /* TODO: Implement 'More' functionality */
+                              },
                               borderRadius: BorderRadius.circular(10),
                               child: Container(
                                 decoration: BoxDecoration(
@@ -256,9 +283,13 @@ class _HomePageState extends State<HomePage> {
                                 child: const Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.grid_view, color: Colors.black54),
+                                    Icon(Icons.grid_view,
+                                        color: Colors.black54),
                                     SizedBox(height: 4),
-                                    Text('More', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                                    Text('More',
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black54)),
                                   ],
                                 ),
                               ),
@@ -272,7 +303,8 @@ class _HomePageState extends State<HomePage> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(10),
                                     image: DecorationImage(
-                                      image: AssetImage(destinations[itemIndex]['image']!),
+                                      image: AssetImage(
+                                          destinations[itemIndex]['image']!),
                                       fit: BoxFit.cover,
                                     ),
                                   ),
@@ -377,7 +409,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Helper widget for grid navigation items for cleaner code
-  Widget _buildGridNavigationItem(String name, IconData icon, VoidCallback onTap) {
+  Widget _buildGridNavigationItem(
+      String name, IconData icon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),

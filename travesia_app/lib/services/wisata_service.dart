@@ -42,7 +42,8 @@ class WisataService {
       if (response != null && response['data'] != null) {
         return Wisata.fromJson(response['data']);
       } else {
-        throw Exception('Failed to parse wisata details or no data found for ID: $wisataId');
+        throw Exception(
+            'Failed to parse wisata details or no data found for ID: $wisataId');
       }
     } catch (e) {
       // Log error or handle more gracefully
@@ -57,7 +58,8 @@ class WisataService {
         String statusCode = parts[0];
         String apiMessage = parts[1];
         if (statusCode == '404') {
-          userFriendlyMessage = 'Gagal memuat detail wisata: Wisata tidak ditemukan.';
+          userFriendlyMessage =
+              'Gagal memuat detail wisata: Wisata tidak ditemukan.';
         } else {
           userFriendlyMessage = 'Gagal memuat detail wisata: $apiMessage';
         }

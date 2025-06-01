@@ -1,5 +1,5 @@
 import '../models/ticket.dart'; // Adjust path as necessary
-import 'api_service.dart';   // Adjust path as necessary
+import 'api_service.dart'; // Adjust path as necessary
 import 'dart:convert'; // For jsonEncode if directly constructing complex bodies
 
 class TicketService {
@@ -16,7 +16,9 @@ class TicketService {
       });
       // Assuming the response structure includes orderId, snapToken, etc. directly
       // For example: {"success": true, "data": {"orderId": "...", "snapToken": "...", "ticketId": "..."}}
-      if (response != null && response['success'] == true && response['data'] != null) {
+      if (response != null &&
+          response['success'] == true &&
+          response['data'] != null) {
         return response['data'] as Map<String, dynamic>;
       } else if (response != null && response['message'] != null) {
         throw Exception('Failed to purchase ticket: ${response['message']}');
@@ -32,20 +34,25 @@ class TicketService {
       }
 
       List<String> parts = rawMessage.splitN(': ', 2);
-      String userFriendlyMessage = 'Gagal melakukan pemesanan tiket: $rawMessage';
+      String userFriendlyMessage =
+          'Gagal melakukan pemesanan tiket: $rawMessage';
       if (parts.length == 2) {
         String statusCode = parts[0];
         String apiMessage = parts[1];
-        if (statusCode == '400') { // Bad Request (e.g. validation error, tickets not available)
+        if (statusCode == '400') {
+          // Bad Request (e.g. validation error, tickets not available)
           userFriendlyMessage = 'Gagal melakukan pemesanan tiket: $apiMessage';
-        } else if (statusCode == '401') { // Unauthorized
-          userFriendlyMessage = 'Gagal melakukan pemesanan tiket: Anda tidak terautentikasi. Silakan login kembali.';
-        } else if (statusCode == '404') { // Not found (e.g. wisata or ticket type not found)
-            userFriendlyMessage = 'Gagal melakukan pemesanan tiket: $apiMessage';
+        } else if (statusCode == '401') {
+          // Unauthorized
+          userFriendlyMessage =
+              'Gagal melakukan pemesanan tiket: Anda tidak terautentikasi. Silakan login kembali.';
+        } else if (statusCode == '404') {
+          // Not found (e.g. wisata or ticket type not found)
+          userFriendlyMessage = 'Gagal melakukan pemesanan tiket: $apiMessage';
         }
         // Add more specific status code handling if needed
         else {
-           userFriendlyMessage = 'Gagal melakukan pemesanan tiket: $apiMessage';
+          userFriendlyMessage = 'Gagal melakukan pemesanan tiket: $apiMessage';
         }
       }
       throw Exception(userFriendlyMessage);
@@ -60,8 +67,7 @@ class TicketService {
         return ticketData.map((json) => Ticket.fromJson(json)).toList();
       } else if (response != null && response['message'] != null) {
         throw Exception('Failed to get tickets: ${response['message']}');
-      }
-      else {
+      } else {
         throw Exception('Failed to parse my tickets list or no data found');
       }
     } catch (e) {
@@ -75,7 +81,7 @@ class TicketService {
       if (parts.length == 2) {
         // String statusCode = parts[0];
         String apiMessage = parts[1];
-         userFriendlyMessage = 'Gagal memuat tiket Anda: $apiMessage';
+        userFriendlyMessage = 'Gagal memuat tiket Anda: $apiMessage';
       }
       throw Exception(userFriendlyMessage);
     }

@@ -14,7 +14,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   late final AuthService _authService;
-  late final ApiService _apiService; // Added ApiService instance
+  late final ApiService _apiService;
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -23,12 +23,27 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _isLoading = false;
   bool _acceptTerms = false;
+  bool _isAuthInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _apiService = ApiService(); // Instantiate ApiService
-    _authService = AuthService(_apiService); // Provide ApiService to AuthService
+    _apiService = ApiService();
+    _initializeAuthService();
+  }
+
+  Future<void> _initializeAuthService() async {
+    try {
+      _authService = await AuthService.init();
+      setState(() {
+        _isAuthInitialized = true;
+      });
+    } catch (e) {
+      if (mounted) {
+        AlertUtils.showError(
+            context, 'Failed to initialize authentication service');
+      }
+    }
   }
 
   @override
@@ -41,6 +56,10 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _register() async {
+    if (!_isAuthInitialized) {
+      AlertUtils.showWarning(context, 'Please wait while initializing...');
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
     if (!_acceptTerms) {
       AlertUtils.showWarning(context, 'Harap setujui syarat dan ketentuan');
@@ -57,22 +76,26 @@ class _RegisterPageState extends State<RegisterPage> {
         _emailController.text,
         _passwordController.text,
         '0000000000', // Default phone number
-        'user',       // Default role
+        'user', // Default role
       );
 
       if (!mounted) return;
 
       if (result['success'] == true) {
-        AlertUtils.showSuccess(context, result['message'] ?? 'Registration successful! Please login.');
+        AlertUtils.showSuccess(context,
+            result['message'] ?? 'Registration successful! Please login.');
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       } else {
-        AlertUtils.showError(context, result['message'] ?? 'Registration failed. Please try again.');
+        AlertUtils.showError(context,
+            result['message'] ?? 'Registration failed. Please try again.');
       }
     } catch (e) {
-      if (mounted) AlertUtils.showError(context, 'An unexpected error occurred: ${e.toString()}');
+      if (mounted)
+        AlertUtils.showError(
+            context, 'An unexpected error occurred: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

@@ -1,6 +1,6 @@
 import 'dart:convert';
 import '../models/review.dart'; // Adjust path as necessary
-import 'api_service.dart';   // Adjust path as necessary
+import 'api_service.dart'; // Adjust path as necessary
 
 class ReviewService {
   final ApiService _apiService;
@@ -14,16 +14,12 @@ class ReviewService {
     String? ticketId, // Optional ticketId
   }) async {
     try {
-      final Map<String, dynamic> body = {
+      final response = await _apiService.post('reviews', {
         'id_wisata': wisataId,
         'rating': rating,
         'komentar': comment,
-      };
-      if (ticketId != null && ticketId.isNotEmpty) {
-        body['id_tiket'] = ticketId;
-      }
-
-      final response = await _apiService.post('reviews', body);
+        if (ticketId != null) 'id_tiket': ticketId,
+      });
 
       // Assuming a successful response might look like:
       // {"success": true, "message": "Review created successfully", "data": reviewObject}
@@ -32,10 +28,13 @@ class ReviewService {
         return {
           'success': true,
           'message': response['message'] ?? 'Review submitted successfully!',
-          'data': response['data'] != null ? Review.fromJson(response['data']) : null,
+          'data': response['data'] != null
+              ? Review.fromJson(response['data'])
+              : null,
         };
       } else {
-        throw Exception(response['message'] ?? 'Failed to submit review: Unknown server response');
+        throw Exception(response['message'] ??
+            'Failed to submit review: Unknown server response');
       }
     } catch (e) {
       print('Error in createReview: $e');
@@ -50,18 +49,24 @@ class ReviewService {
       if (parts.length == 2) {
         String statusCode = parts[0];
         String apiMessage = parts[1];
-        if (statusCode == '400') { // Bad Request (e.g. validation error)
+        if (statusCode == '400') {
+          // Bad Request (e.g. validation error)
           userFriendlyMessage = 'Gagal mengirim ulasan: $apiMessage';
-        } else if (statusCode == '401') { // Unauthorized
-          userFriendlyMessage = 'Gagal mengirim ulasan: Anda tidak terautentikasi. Silakan login kembali.';
-        } else if (statusCode == '403') { // Forbidden (e.g. user hasn't purchased ticket for this wisata)
-            userFriendlyMessage = 'Gagal mengirim ulasan: $apiMessage (Anda mungkin perlu membeli tiket terlebih dahulu).';
-        } else if (statusCode == '404') { // Not found (e.g. wisata not found)
-            userFriendlyMessage = 'Gagal mengirim ulasan: $apiMessage';
+        } else if (statusCode == '401') {
+          // Unauthorized
+          userFriendlyMessage =
+              'Gagal mengirim ulasan: Anda tidak terautentikasi. Silakan login kembali.';
+        } else if (statusCode == '403') {
+          // Forbidden (e.g. user hasn't purchased ticket for this wisata)
+          userFriendlyMessage =
+              'Gagal mengirim ulasan: $apiMessage (Anda mungkin perlu membeli tiket terlebih dahulu).';
+        } else if (statusCode == '404') {
+          // Not found (e.g. wisata not found)
+          userFriendlyMessage = 'Gagal mengirim ulasan: $apiMessage';
         }
         // Add more specific status code handling if needed
         else {
-           userFriendlyMessage = 'Gagal mengirim ulasan: $apiMessage';
+          userFriendlyMessage = 'Gagal mengirim ulasan: $apiMessage';
         }
       }
       // createReview returns a map, so we reformat the exception into that structure for consistency in UI handling.
@@ -77,26 +82,29 @@ class ReviewService {
     int limit = 10,
   }) async {
     try {
-      final response = await _apiService.get('reviews/wisata/$wisataId?page=$page&limit=$limit');
+      final response = await _apiService
+          .get('reviews/wisata/$wisataId?page=$page&limit=$limit');
 
       // Assuming response structure: {"success": true, "data": {"reviews": [], "currentPage": 1, "totalPages": 1, "totalReviews": 0}}
       // Or simpler: {"data": []} if not paginated from backend in this way
       if (response != null && response['data'] != null) {
         List<dynamic> reviewData;
-        if (response['data'] is List) { // Simpler structure
-            reviewData = response['data'];
-        } else if (response['data'] is Map && response['data']['reviews'] is List) { // Paginated structure
-            reviewData = response['data']['reviews'];
-            // Potentially, you could return the whole map if you need pagination info in UI
-            // For now, just returning the list of reviews
+        if (response['data'] is List) {
+          // Simpler structure
+          reviewData = response['data'];
+        } else if (response['data'] is Map &&
+            response['data']['reviews'] is List) {
+          // Paginated structure
+          reviewData = response['data']['reviews'];
+          // Potentially, you could return the whole map if you need pagination info in UI
+          // For now, just returning the list of reviews
         } else {
-            throw Exception('Unexpected data format for reviews');
+          throw Exception('Unexpected data format for reviews');
         }
         return reviewData.map((json) => Review.fromJson(json)).toList();
       } else if (response != null && response['message'] != null) {
-         throw Exception('Failed to get reviews: ${response['message']}');
-      }
-      else {
+        throw Exception('Failed to get reviews: ${response['message']}');
+      } else {
         throw Exception('Failed to parse reviews list or no data found');
       }
     } catch (e) {

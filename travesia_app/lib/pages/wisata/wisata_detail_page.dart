@@ -26,13 +26,13 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
   late final ApiService _apiService;
   late final WisataService _wisataService;
   late final TicketService _ticketService;
-  late final ReviewService _reviewService; // Add ReviewService
-  late final AuthService _authService; // Add AuthService
+  late final ReviewService _reviewService;
+  late final AuthService _authService; // Keep this line
 
   Future<Wisata>? _wisataDetailFuture;
   Future<List<Review>>? _reviewsFuture; // Future for reviews
 
-  Map<String, int> _ticketQuantities = {};
+  final Map<String, int> _ticketQuantities = {};
   bool _isPurchasing = false;
   bool _isLoading = true;
   String? _errorMessage;
@@ -49,11 +49,16 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
     _apiService = ApiService();
     _wisataService = WisataService(_apiService);
     _ticketService = TicketService(_apiService);
-    _reviewService = ReviewService(_apiService); // Instantiate ReviewService
-    _authService = AuthService(_apiService); // Instantiate AuthService
+    _reviewService = ReviewService(_apiService);
+    _initializeAuthService(); // Add this line
 
     _fetchWisataDetails();
-    _fetchReviews(); // Fetch reviews initially
+    _fetchReviews();
+  }
+
+  // Add this method
+  Future<void> _initializeAuthService() async {
+    _authService = await AuthService.init();
   }
 
   @override
@@ -88,7 +93,8 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detail Wisata', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('Detail Wisata',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.red,
         elevation: 2.0,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -108,9 +114,11 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
     return FutureBuilder<Wisata>(
       future: _wisataDetailFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting && !_isLoading) {
-           // Handles cases where future is re-triggered (e.g. by a refresh not implemented here yet)
-          return const Center(child: CircularProgressIndicator(color: Colors.red));
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !_isLoading) {
+          // Handles cases where future is re-triggered (e.g. by a refresh not implemented here yet)
+          return const Center(
+              child: CircularProgressIndicator(color: Colors.red));
         }
         if (snapshot.hasError) {
           return _buildErrorWidget(snapshot.error.toString());
@@ -129,18 +137,24 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
               const SizedBox(height: 20),
               Text(
                 wisata.nama,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.red[700]),
+                style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red[700]),
               ),
               const SizedBox(height: 8),
               _buildRatingSection(wisata.averageRating, wisata.reviews.length),
               const SizedBox(height: 16),
-              _buildInfoRow(Icons.description_outlined, 'Deskripsi', wisata.deskripsi),
+              _buildInfoRow(
+                  Icons.description_outlined, 'Deskripsi', wisata.deskripsi),
               const SizedBox(height: 12),
-              _buildInfoRow(Icons.location_on_outlined, 'Alamat', wisata.alamat),
+              _buildInfoRow(
+                  Icons.location_on_outlined, 'Alamat', wisata.alamat),
               if (wisata.lokasi != null) ...[
                 const SizedBox(height: 4),
                 Padding(
-                  padding: const EdgeInsets.only(left: 36.0), // Align with text of InfoRow
+                  padding: const EdgeInsets.only(
+                      left: 36.0), // Align with text of InfoRow
                   child: Text(
                     '${wisata.lokasi!.nama} (Kota/Kab)', // Assuming lokasi.nama is city/regency
                     style: TextStyle(fontSize: 16, color: Colors.grey[700]),
@@ -151,9 +165,11 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
               // TODO: Add map link if coordinates are available
               // if (wisata.koordinat.latitude != 0 && wisata.koordinat.longitude != 0)
               //   _buildMapLink(wisata.koordinat),
-              _buildInfoRow(Icons.contact_phone_outlined, 'Kontak', wisata.kontak),
+              _buildInfoRow(
+                  Icons.contact_phone_outlined, 'Kontak', wisata.kontak),
               const SizedBox(height: 12),
-              _buildInfoRow(Icons.language_outlined, 'Website', wisata.website, isLink: true),
+              _buildInfoRow(Icons.language_outlined, 'Website', wisata.website,
+                  isLink: true),
               const SizedBox(height: 16),
               _buildSectionTitle('Jam Operasional'),
               _buildJamOperasionalSection(wisata.jamOperasional),
@@ -201,12 +217,14 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Text(
         title,
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red[600]),
+        style: TextStyle(
+            fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red[600]),
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value, {bool isLink = false}) {
+  Widget _buildInfoRow(IconData icon, String label, String value,
+      {bool isLink = false}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -218,15 +236,25 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
             children: [
               Text(
                 label,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black54),
+                style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black54),
               ),
               const SizedBox(height: 2),
               isLink
                   ? InkWell(
-                      onTap: () { /* TODO: Implement launch URL */ },
+                      onTap: () {/* TODO: Implement launch URL */},
                       child: Text(
                         value.isNotEmpty ? value : 'Tidak tersedia',
-                        style: TextStyle(fontSize: 16, color: value.isNotEmpty ? Colors.blue : Colors.grey[700], decoration: value.isNotEmpty ? TextDecoration.underline : TextDecoration.none),
+                        style: TextStyle(
+                            fontSize: 16,
+                            color: value.isNotEmpty
+                                ? Colors.blue
+                                : Colors.grey[700],
+                            decoration: value.isNotEmpty
+                                ? TextDecoration.underline
+                                : TextDecoration.none),
                       ),
                     )
                   : Text(
@@ -248,7 +276,9 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
           color: Colors.grey[300],
           borderRadius: BorderRadius.circular(12.0),
         ),
-        child: const Center(child: Icon(Icons.image_not_supported, size: 60, color: Colors.grey)),
+        child: const Center(
+            child:
+                Icon(Icons.image_not_supported, size: 60, color: Colors.grey)),
       );
     }
     return SizedBox(
@@ -260,7 +290,8 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
           final item = gallery[index];
           return Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.0)),
             margin: const EdgeInsets.only(right: 10.0),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12.0),
@@ -271,7 +302,9 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
                 errorBuilder: (context, error, stackTrace) => Container(
                   width: MediaQuery.of(context).size.width * 0.8,
                   color: Colors.grey[200],
-                  child: const Center(child: Icon(Icons.broken_image, size: 50, color: Colors.grey)),
+                  child: const Center(
+                      child: Icon(Icons.broken_image,
+                          size: 50, color: Colors.grey)),
                 ),
               ),
             ),
@@ -283,11 +316,12 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
 
   Widget _buildRatingSection(double? averageRating, int reviewCount) {
     if (averageRating == null || averageRating == 0) {
-      return const Text('Belum ada rating', style: TextStyle(fontSize: 16, color: Colors.grey));
+      return const Text('Belum ada rating',
+          style: TextStyle(fontSize: 16, color: Colors.grey));
     }
     return Row(
       children: [
-        Icon(Icons.star, color: Colors.amber, size: 24),
+        const Icon(Icons.star, color: Colors.amber, size: 24),
         const SizedBox(width: 8),
         Text(
           averageRating.toStringAsFixed(1),
@@ -304,7 +338,8 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
 
   Widget _buildJamOperasionalSection(List<JamOperasional> jamOperasional) {
     if (jamOperasional.isEmpty) {
-      return const Text('Informasi jam operasional tidak tersedia.', style: TextStyle(fontSize: 16));
+      return const Text('Informasi jam operasional tidak tersedia.',
+          style: TextStyle(fontSize: 16));
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,8 +348,15 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
           padding: const EdgeInsets.symmetric(vertical: 4.0),
           child: Row(
             children: [
-              Expanded(flex: 2, child: Text(jo.hari, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
-              Expanded(flex: 3, child: Text('${jo.jamBuka} - ${jo.jamTutup}', style: const TextStyle(fontSize: 16))),
+              Expanded(
+                  flex: 2,
+                  child: Text(jo.hari,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w500))),
+              Expanded(
+                  flex: 3,
+                  child: Text('${jo.jamBuka} - ${jo.jamTutup}',
+                      style: const TextStyle(fontSize: 16))),
             ],
           ),
         );
@@ -322,19 +364,23 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
     );
   }
 
-  Widget _buildTicketSelectionSection(List<TicketType> ticketTypes, String wisataId) {
-    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+  Widget _buildTicketSelectionSection(
+      List<TicketType> ticketTypes, String wisataId) {
+    final currencyFormatter =
+        NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     if (ticketTypes.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 16.0),
-        child: Text('Informasi tiket tidak tersedia untuk wisata ini.', style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic)),
+        child: Text('Informasi tiket tidak tersedia untuk wisata ini.',
+            style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic)),
       );
     }
 
     double totalPrice = 0;
     _ticketQuantities.forEach((ticketTypeId, quantity) {
-      final ticketType = ticketTypes.firstWhere((tt) => tt.id == ticketTypeId, orElse: () => throw Exception("Invalid ticket type ID"));
+      final ticketType = ticketTypes.firstWhere((tt) => tt.id == ticketTypeId,
+          orElse: () => throw Exception("Invalid ticket type ID"));
       totalPrice += ticketType.harga * quantity;
     });
 
@@ -345,19 +391,26 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
           return Card(
             elevation: 2,
             margin: const EdgeInsets.symmetric(vertical: 8.0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10.0)),
             child: Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(ticket.nama, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                  Text(ticket.nama,
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
-                  Text(ticket.deskripsi, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                  Text(ticket.deskripsi,
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600])),
                   const SizedBox(height: 8),
                   Text(
                     currencyFormatter.format(ticket.harga),
-                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.red),
+                    style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -367,24 +420,38 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                            onPressed: _isPurchasing ? null : () {
-                              setState(() {
-                                if ((_ticketQuantities[ticket.id] ?? 0) > 0) {
-                                  _ticketQuantities[ticket.id] = (_ticketQuantities[ticket.id] ?? 0) - 1;
-                                }
-                              });
-                            },
+                            icon: const Icon(Icons.remove_circle_outline,
+                                color: Colors.red),
+                            onPressed: _isPurchasing
+                                ? null
+                                : () {
+                                    setState(() {
+                                      if ((_ticketQuantities[ticket.id] ?? 0) >
+                                          0) {
+                                        _ticketQuantities[ticket.id] =
+                                            (_ticketQuantities[ticket.id] ??
+                                                    0) -
+                                                1;
+                                      }
+                                    });
+                                  },
                           ),
-                          Text('${_ticketQuantities[ticket.id] ?? 0}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          Text('${_ticketQuantities[ticket.id] ?? 0}',
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold)),
                           IconButton(
-                            icon: const Icon(Icons.add_circle_outline, color: Colors.green),
-                            onPressed: _isPurchasing ? null : () {
-                              setState(() {
-                                // Check against stock if available: ticket.stok
-                                _ticketQuantities[ticket.id] = (_ticketQuantities[ticket.id] ?? 0) + 1;
-                              });
-                            },
+                            icon: const Icon(Icons.add_circle_outline,
+                                color: Colors.green),
+                            onPressed: _isPurchasing
+                                ? null
+                                : () {
+                                    setState(() {
+                                      // Check against stock if available: ticket.stok
+                                      _ticketQuantities[ticket.id] =
+                                          (_ticketQuantities[ticket.id] ?? 0) +
+                                              1;
+                                    });
+                                  },
                           ),
                         ],
                       ),
@@ -402,28 +469,41 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Total Harga:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('Total Harga:',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 Text(
                   currencyFormatter.format(totalPrice),
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red),
+                  style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red),
                 ),
               ],
             ),
           ),
         Center(
           child: ElevatedButton(
-            onPressed: (_ticketQuantities.values.any((qty) => qty > 0) && !_isPurchasing)
-              ? () => _handlePurchase(wisataId)
-              : null,
+            onPressed: (_ticketQuantities.values.any((qty) => qty > 0) &&
+                    !_isPurchasing)
+                ? () => _handlePurchase(wisataId)
+                : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-              textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
-            ),
+                backgroundColor: Colors.red,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                textStyle:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10))),
             child: _isPurchasing
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Pesan Tiket', style: TextStyle(color: Colors.white)),
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : const Text('Pesan Tiket',
+                    style: TextStyle(color: Colors.white)),
           ),
         ),
       ],
@@ -445,12 +525,12 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
     }
 
     try {
-      final result = await _ticketService.purchaseTicket(wisataId, itemsToPurchase);
+      final result =
+          await _ticketService.purchaseTicket(wisataId, itemsToPurchase);
       // Assuming result contains orderId, snapToken, etc.
       AlertUtils.showSuccess(
         context,
-        'Pembelian Berhasil!\nOrder ID: ${result['orderId']}\nSNAP Token: ${result['snapToken']}\nLanjutkan pembayaran di halaman "Tiket Saya".',
-        duration: const Duration(seconds: 7) // Longer duration for user to read
+        'Pembelian Berhasil!\nOrder ID: ${result['orderId']}\nSNAP Token: ${result['snapToken']}\nLanjutkan pembayaran di halaman "Tiket Saya".', // Longer duration for user to read
       );
       setState(() {
         _ticketQuantities.clear(); // Clear quantities after successful purchase
@@ -462,7 +542,7 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
       }
       AlertUtils.showError(context, 'Gagal melakukan pemesanan: $errorMessage');
     } finally {
-      if(mounted) setState(() => _isPurchasing = false);
+      if (mounted) setState(() => _isPurchasing = false);
     }
   }
 
@@ -472,11 +552,13 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: ElevatedButton.icon(
           icon: const Icon(Icons.edit_note, color: Colors.white),
-          label: const Text('Tulis Ulasan', style: TextStyle(color: Colors.white, fontSize: 16)),
+          label: const Text('Tulis Ulasan',
+              style: TextStyle(color: Colors.white, fontSize: 16)),
           onPressed: () async {
             bool loggedIn = await _authService.isLoggedIn();
             if (!loggedIn) {
-              AlertUtils.showError(context, 'Anda harus login untuk menulis ulasan.');
+              AlertUtils.showError(
+                  context, 'Anda harus login untuk menulis ulasan.');
               // Optionally navigate to login page
               // Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
               return;
@@ -487,10 +569,10 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
             _showReviewDialog();
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.redAccent,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
-          ),
+              backgroundColor: Colors.redAccent,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10))),
         ),
       ),
     );
@@ -503,90 +585,101 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder( // To update rating within the dialog
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Tulis Ulasan Anda'),
-              content: Form(
-                key: _reviewFormKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      const Text('Berikan rating Anda:', style: TextStyle(fontSize: 16)),
-                      const SizedBox(height: 8),
-                      RatingBar.builder(
-                        initialRating: _currentRating,
-                        minRating: 1,
-                        direction: Axis.horizontal,
-                        allowHalfRating: false,
-                        itemCount: 5,
-                        itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
-                        itemBuilder: (context, _) => const Icon(Icons.star, color: Colors.amber),
-                        onRatingUpdate: (rating) {
-                           setDialogState(() { // Use setDialogState to update dialog's UI
-                            _currentRating = rating;
-                          });
-                        },
+        return StatefulBuilder(// To update rating within the dialog
+            builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Tulis Ulasan Anda'),
+            content: Form(
+              key: _reviewFormKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    const Text('Berikan rating Anda:',
+                        style: TextStyle(fontSize: 16)),
+                    const SizedBox(height: 8),
+                    RatingBar.builder(
+                      initialRating: _currentRating,
+                      minRating: 1,
+                      direction: Axis.horizontal,
+                      allowHalfRating: false,
+                      itemCount: 5,
+                      itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      itemBuilder: (context, _) =>
+                          const Icon(Icons.star, color: Colors.amber),
+                      onRatingUpdate: (rating) {
+                        setDialogState(() {
+                          // Use setDialogState to update dialog's UI
+                          _currentRating = rating;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _reviewCommentController,
+                      decoration: InputDecoration(
+                        labelText: 'Komentar Anda',
+                        hintText: 'Bagaimana pengalaman Anda?',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8)),
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _reviewCommentController,
-                        decoration: InputDecoration(
-                          labelText: 'Komentar Anda',
-                          hintText: 'Bagaimana pengalaman Anda?',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        maxLines: 3,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Komentar tidak boleh kosong.';
-                          }
-                          if (value.length < 10) {
-                            return 'Komentar minimal 10 karakter.';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
-                  ),
+                      maxLines: 3,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Komentar tidak boleh kosong.';
+                        }
+                        if (value.length < 10) {
+                          return 'Komentar minimal 10 karakter.';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
                 ),
               ),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('Batal'),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  child: _isSubmittingReview
-                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Kirim Ulasan', style: TextStyle(color: Colors.white)),
-                  onPressed: _isSubmittingReview ? null : () {
-                    if (_reviewFormKey.currentState!.validate()) {
-                       // Use setDialogState for UI changes within dialog before async call
-                      setDialogState(() => _isSubmittingReview = true);
-                      _submitReview().then((_) {
-                        // After async call, ensure dialog is still mounted before popping
-                        if (Navigator.of(context).canPop()) {
-                           Navigator.of(context).pop();
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Batal'),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: _isSubmittingReview
+                    ? null
+                    : () {
+                        if (_reviewFormKey.currentState!.validate()) {
+                          // Use setDialogState for UI changes within dialog before async call
+                          setDialogState(() => _isSubmittingReview = true);
+                          _submitReview().then((_) {
+                            // After async call, ensure dialog is still mounted before popping
+                            if (Navigator.of(context).canPop()) {
+                              Navigator.of(context).pop();
+                            }
+                          }).whenComplete(() {
+                            // Ensure to reset loading state even if dialog was dismissed early
+                            // Check mounted for the main page state, not dialog state here
+                            if (mounted) {
+                              setState(() => _isSubmittingReview = false);
+                            } else {
+                              _isSubmittingReview =
+                                  false; // Reset if page not mounted
+                            }
+                          });
                         }
-                      }).whenComplete(() {
-                        // Ensure to reset loading state even if dialog was dismissed early
-                        // Check mounted for the main page state, not dialog state here
-                        if(mounted) {
-                           setState(() => _isSubmittingReview = false);
-                        } else {
-                           _isSubmittingReview = false; // Reset if page not mounted
-                        }
-                      });
-                    }
-                  },
-                ),
-              ],
-            );
-          }
-        );
+                      },
+                child: _isSubmittingReview
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Text('Kirim Ulasan',
+                        style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          );
+        });
       },
     );
   }
@@ -605,12 +698,14 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
       );
 
       if (result['success'] == true) {
-        AlertUtils.showSuccess(context, result['message'] ?? 'Ulasan berhasil dikirim!');
+        AlertUtils.showSuccess(
+            context, result['message'] ?? 'Ulasan berhasil dikirim!');
         _fetchReviews(); // Refresh the reviews list
         // Also potentially refresh wisata details if average rating changes
         _fetchWisataDetails();
       } else {
-        AlertUtils.showError(context, result['message'] ?? 'Gagal mengirim ulasan.');
+        AlertUtils.showError(
+            context, result['message'] ?? 'Gagal mengirim ulasan.');
       }
     } catch (e) {
       String errorMessage = e.toString();
@@ -627,32 +722,41 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
       future: _reviewsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: Padding(padding: EdgeInsets.all(16.0), child: CircularProgressIndicator(color: Colors.red)));
+          return const Center(
+              child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(color: Colors.red)));
         }
         if (snapshot.hasError) {
           return Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Text('Gagal memuat ulasan: ${snapshot.error}', style: const TextStyle(color: Colors.redAccent)),
+            child: Text('Gagal memuat ulasan: ${snapshot.error}',
+                style: const TextStyle(color: Colors.redAccent)),
           );
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 16.0),
-            child: Center(child: Text('Belum ada ulasan untuk wisata ini.', style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic))),
+            child: Center(
+                child: Text('Belum ada ulasan untuk wisata ini.',
+                    style:
+                        TextStyle(fontSize: 16, fontStyle: FontStyle.italic))),
           );
         }
 
         final reviews = snapshot.data!;
         return ListView.builder(
           shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(), // To be used within SingleChildScrollView
+          physics:
+              const NeverScrollableScrollPhysics(), // To be used within SingleChildScrollView
           itemCount: reviews.length,
           itemBuilder: (context, index) {
             final review = reviews[index];
             return Card(
               elevation: 1.5,
               margin: const EdgeInsets.symmetric(vertical: 8.0),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0)),
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: Column(
@@ -663,18 +767,21 @@ class _WisataDetailPageState extends State<WisataDetailPage> {
                       children: [
                         Text(
                           review.user?.nama ?? 'Pengguna Anonim',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600),
                         ),
                         Text(
                           DateFormat('dd MMM yyyy').format(review.createdAt),
-                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                          style:
+                              TextStyle(fontSize: 12, color: Colors.grey[600]),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     RatingBarIndicator(
                       rating: review.rating.toDouble(),
-                      itemBuilder: (context, index) => const Icon(Icons.star, color: Colors.amber),
+                      itemBuilder: (context, index) =>
+                          const Icon(Icons.star, color: Colors.amber),
                       itemCount: 5,
                       itemSize: 18.0,
                       direction: Axis.horizontal,

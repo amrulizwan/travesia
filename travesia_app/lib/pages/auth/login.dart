@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travesia_app/pages/auth/forgot.dart';
 import 'package:travesia_app/pages/auth/register.dart';
-import 'package:flutter/material.dart';
-import 'package:travesia_app/pages/auth/forgot.dart';
-import 'package:travesia_app/pages/auth/register.dart';
 import 'package:travesia_app/pages/home/home.dart';
 import 'package:travesia_app/services/api_service.dart'; // Added ApiService import
 import 'package:travesia_app/services/auth_service.dart';
@@ -19,28 +16,40 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   late final AuthService _authService;
-  late final ApiService _apiService; // Added ApiService instance
+  late final ApiService _apiService;
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isAuthInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _apiService = ApiService(); // Instantiate ApiService
-    _authService = AuthService(_apiService); // Provide ApiService to AuthService
+    _apiService = ApiService();
+    _initializeAuthService();
   }
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+  Future<void> _initializeAuthService() async {
+    try {
+      _authService = await AuthService.init();
+      setState(() {
+        _isAuthInitialized = true;
+      });
+    } catch (e) {
+      if (mounted) {
+        AlertUtils.showError(
+            context, 'Failed to initialize authentication service');
+      }
+    }
   }
 
   Future<void> _login() async {
+    if (!_isAuthInitialized) {
+      AlertUtils.showWarning(context, 'Please wait while initializing...');
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -65,11 +74,14 @@ class _LoginPageState extends State<LoginPage> {
         );
       } else {
         // Show error message from authService response
-        AlertUtils.showError(context, result['message'] ?? 'Login failed. Please try again.');
+        AlertUtils.showError(
+            context, result['message'] ?? 'Login failed. Please try again.');
       }
     } catch (e) {
       // Catch any other exceptions during the login process
-      if (mounted) AlertUtils.showError(context, 'An unexpected error occurred: ${e.toString()}');
+      if (mounted)
+        AlertUtils.showError(
+            context, 'An unexpected error occurred: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -196,25 +208,19 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don't have an account? "),
-                      InkWell(
-                        onTap: () => Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const RegisterPage()),
-                        ),
-                        child: const Text(
-                          'Create account',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () => Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RegisterPage(),
+                      ),
+                    ),
+                    child: const Text(
+                      'Create account',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
                 ],
               ),
             ),
