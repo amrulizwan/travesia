@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: Date,
   tempatWisata: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Wisata' }],
   favoritWisata: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Wisata' }],
+  tickets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ticket' }], // <-- NEW FIELD
   createdAt: { type: Date, default: Date.now },
 });
 
