@@ -1,1 +1,0 @@
- D:\\project\\travesia_app\\.dart_tool\\flutter_build\\6a7bfcdff3c80e1a4eb8654c6820e1e0\\native_assets.yaml: 
