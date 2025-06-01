@@ -59,6 +59,46 @@ class TicketService {
     }
   }
 
+  Future<Map<String, dynamic>> getSalesByWisata(String wisataId) async {
+    try {
+      final response = await _apiService.get('tickets/sales/$wisataId');
+      // Assuming the response structure is {"success": true, "data": {"totalRevenue": ..., "totalTicketsSold": ...}}
+      // Or directly {"data": {"totalRevenue": ..., "totalTicketsSold": ...}}
+      // Or even directly {"totalRevenue": ..., "totalTicketsSold": ...}
+      // For consistency with getMyTickets, we'll try response['data'] first.
+      if (response != null && response['data'] != null && response['data'] is Map<String, dynamic>) {
+        return response['data'] as Map<String, dynamic>;
+      } else if (response != null && response is Map<String, dynamic> && response.containsKey('totalRevenue')) {
+        // Fallback if data is not nested under 'data' key but directly in response
+        return response;
+      }
+       else if (response != null && response['message'] != null) {
+        throw Exception('Failed to get sales data: ${response['message']}');
+      }
+      else {
+        throw Exception('Failed to parse sales data or no data found');
+      }
+    } catch (e) {
+      print('Error in getSalesByWisata for $wisataId: $e');
+      String rawMessage = e.toString();
+      if (rawMessage.startsWith("Exception: ")) {
+        rawMessage = rawMessage.substring("Exception: ".length);
+      }
+      List<String> parts = rawMessage.splitN(': ', 2);
+      String userFriendlyMessage = 'Gagal memuat data penjualan: $rawMessage';
+      if (parts.length == 2) {
+        String statusCode = parts[0];
+        String apiMessage = parts[1];
+         if (statusCode == '401' || statusCode == '403') {
+           userFriendlyMessage = 'Gagal memuat data penjualan: Anda tidak memiliki izin untuk mengakses sumber ini.';
+         } else {
+            userFriendlyMessage = 'Gagal memuat data penjualan: $apiMessage';
+         }
+      }
+      throw Exception(userFriendlyMessage);
+    }
+  }
+
   Future<List<Ticket>> getMyTickets() async {
     try {
       final response = await _apiService.get('tickets/my-tickets');
