@@ -14,8 +14,12 @@ const s3 = new S3Client({
   },
 });
 
-const createMulterUpload = (bucket) =>
-  multer({
+const createMulterUpload = (bucket) => {
+  if (!bucket) {
+    throw new Error(`Bucket name is not configured in environment variables`);
+  }
+
+  return multer({
     storage: multerS3({
       s3,
       bucket,
@@ -28,17 +32,23 @@ const createMulterUpload = (bucket) =>
       },
     }),
   });
-
-export const generateImageUrl = (bucket, fileName) => {
-  return `https://${bucket}.mypsikolog.id/${fileName}`;
 };
 
-export const imageUpload = createMulterUpload(process.env.CLOUDFLARE_IMAGE_BUCKET);
-export const chatImageUpload = createMulterUpload(process.env.CLOUDFLARE_CHAT_IMAGE_BUCKET);
-export const bannerUpload = createMulterUpload(process.env.CLOUDFLARE_BANNER_BUCKET);
-export const audioUpload = createMulterUpload(process.env.CLOUDFLARE_AUDIO_BUCKET);
-export const fileUpload = createMulterUpload(process.env.CLOUDFLARE_FILE_BUCKET);
-export const profileUpload = createMulterUpload(process.env.CLOUDFLARE_PROFILE_BUCKET);
-export const iconsUpload = createMulterUpload(process.env.CLOUDFLARE_ICON_BUCKET);
-export const galleryUpload = createMulterUpload(process.env.CLOUDFLARE_GALLERY_BUCKET); // Added for gallery images
+// Validate bucket names before creating uploaders
+const validateBucket = (bucketName, envVar) => {
+  if (!bucketName) {
+    throw new Error(`${envVar} is not configured in environment variables`);
+  }
+  return bucketName;
+};
+
+export const imageUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_IMAGE_BUCKET, 'CLOUDFLARE_IMAGE_BUCKET'));
+export const chatImageUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_CHAT_IMAGE_BUCKET, 'CLOUDFLARE_CHAT_IMAGE_BUCKET'));
+export const bannerUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_BANNER_BUCKET, 'CLOUDFLARE_BANNER_BUCKET'));
+export const audioUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_AUDIO_BUCKET, 'CLOUDFLARE_AUDIO_BUCKET'));
+export const fileUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_FILE_BUCKET, 'CLOUDFLARE_FILE_BUCKET'));
+export const profileUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_PROFILE_BUCKET, 'CLOUDFLARE_PROFILE_BUCKET'));
+export const iconsUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_ICON_BUCKET, 'CLOUDFLARE_ICON_BUCKET'));
+export const galleryUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_IMAGE_BUCKET, 'CLOUDFLARE_IMAGE_BUCKET'));
+
 export { s3 };

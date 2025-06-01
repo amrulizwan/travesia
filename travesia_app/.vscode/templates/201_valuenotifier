@@ -1,0 +1,190 @@
+#packages: 
+@@@lib/presentation/hyper_example/view/hyper_example_view.dart
+import 'package:flutter/material.dart';
+import 'package:hyper_ui/core.dart';
+
+class HyperExampleView extends StatefulWidget {
+  const HyperExampleView({super.key});
+
+  @override
+  State<HyperExampleView> createState() => _HyperExampleViewState();
+}
+
+class _HyperExampleViewState extends State<HyperExampleView> {
+  final controller = HyperExampleController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => onReady());
+  }
+
+  void onReady() {
+    // After 1st build() is called
+    controller.initializeData();
+    
+    // Example of how to listen to state changes
+    controller.state.errorMessage.addListener(() {
+      if (controller.state.status.value == HyperExampleStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(controller.state.errorMessage.value),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: controller.state.status,
+      builder: (context, status, _) {
+        if (status == HyperExampleStatus.loading) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (status == HyperExampleStatus.error) {
+          return Scaffold(
+            body: Center(
+              child: Text("Error: ${controller.state.errorMessage.value}"),
+            ),
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("HyperExample"),
+            actions: const [],
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                Text(
+                  "UniqueID: ${UniqueKey()}",
+                  style: const TextStyle(
+                    fontSize: 18.0,
+                  ),
+                ),
+                const SizedBox(
+                  height: 12.0,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: () => controller.decrement(),
+                      icon: const Icon(Icons.remove, color: Colors.grey),
+                    ),
+                    ValueListenableBuilder(
+                      valueListenable: controller.state.counter,
+                      builder: (context, value, _) {
+                        return Text(
+                          "$value",
+                          style: const TextStyle(
+                            fontSize: 20.0,
+                            color: Colors.grey,
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      onPressed: () => controller.increment(),
+                      icon: const Icon(Icons.add, color: Colors.grey),
+                    ),
+                  ],
+                ),
+                const SizedBox(
+                  height: 12.0,
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => controller.initializeData(),
+                  child: const Text("Reload"),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+---
+@@@lib/presentation/hyper_example/state/hyper_example_state.dart
+import 'package:flutter/material.dart';
+
+enum HyperExampleStatus { initial, loading, loaded, error }
+
+class HyperExampleState {
+  final ValueNotifier<HyperExampleStatus> status;
+  final ValueNotifier<int> counter;
+  final ValueNotifier<String> errorMessage;
+
+  HyperExampleState({
+    HyperExampleStatus initialStatus = HyperExampleStatus.initial,
+    int initialCounter = 0,
+    String initialErrorMessage = '',
+  }) : 
+    status = ValueNotifier<HyperExampleStatus>(initialStatus),
+    counter = ValueNotifier<int>(initialCounter),
+    errorMessage = ValueNotifier<String>(initialErrorMessage);
+
+  void dispose() {
+    status.dispose();
+    counter.dispose();
+    errorMessage.dispose();
+  }
+}
+---
+@@@lib/presentation/hyper_example/controller/hyper_example_controller.dart
+import 'package:hyper_ui/core.dart';
+
+class HyperExampleController {
+  final HyperExampleState state;
+
+  HyperExampleController() : state = HyperExampleState();
+
+  Future<void> initializeData() async {
+    state.status.value = HyperExampleStatus.loading;
+    
+    try {
+      // Simulate API call
+      await Future.delayed(const Duration(seconds: 2));
+      state.status.value = HyperExampleStatus.loaded;
+    } catch (e) {
+      state.status.value = HyperExampleStatus.error;
+      state.errorMessage.value = e.toString();
+    }
+  }
+
+  void increment() {
+    state.counter.value++;
+  }
+
+  void decrement() {
+    state.counter.value--;
+  }
+
+  void dispose() {
+    state.dispose();
+  }
+}
+---
+@@@lib/presentation/hyper_example/widget/_
+---

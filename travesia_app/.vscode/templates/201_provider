@@ -1,0 +1,173 @@
+#packages: provider
+@@@lib/presentation/hyper_example/view/hyper_example_view.dart
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:hyper_ui/core.dart';
+
+class HyperExampleView extends StatefulWidget {
+  const HyperExampleView({super.key});
+
+  @override
+  State<HyperExampleView> createState() => _HyperExampleViewState();
+}
+
+class _HyperExampleViewState extends State<HyperExampleView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => onReady());
+  }
+
+  void onReady() {
+    // After 1st build() is called
+    Provider.of<HyperExampleProvider>(context, listen: false).initializeData();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (context) => HyperExampleProvider(),
+      child: Consumer<HyperExampleProvider>(
+        builder: (context, provider, child) {
+          if (provider.state.status == HyperExampleStatus.loading) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
+          if (provider.state.status == HyperExampleStatus.error) {
+            return Scaffold(
+              body: Center(
+                child: Text("Error: ${provider.state.errorMessage}"),
+              ),
+            );
+          }
+
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text("HyperExample"),
+              actions: const [],
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                children: [
+                  Text(
+                    "UniqueID: ${UniqueKey()}",
+                    style: const TextStyle(
+                      fontSize: 18.0,
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 12.0,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        onPressed: () => provider.decrement(),
+                        icon: const Icon(Icons.remove, color: Colors.grey),
+                      ),
+                      Text(
+                        "${provider.state.counter}",
+                        style: const TextStyle(
+                          fontSize: 20.0,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => provider.increment(),
+                        icon: const Icon(Icons.add, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 12.0,
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () => provider.initializeData(),
+                    child: const Text("Reload"),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+---
+@@@lib/presentation/hyper_example/state/hyper_example_state.dart
+enum HyperExampleStatus { initial, loading, loaded, error }
+
+class HyperExampleState {
+  final HyperExampleStatus status;
+  final int counter;
+  final String errorMessage;
+
+  HyperExampleState({
+    this.status = HyperExampleStatus.initial,
+    this.counter = 0,
+    this.errorMessage = '',
+  });
+
+  HyperExampleState copyWith({
+    HyperExampleStatus? status,
+    int? counter,
+    String? errorMessage,
+  }) {
+    return HyperExampleState(
+      status: status ?? this.status,
+      counter: counter ?? this.counter,
+      errorMessage: errorMessage ?? this.errorMessage,
+    );
+  }
+}
+---
+@@@lib/presentation/hyper_example/provider/hyper_example_provider.dart
+import 'package:flutter/material.dart';
+import 'package:hyper_ui/core.dart';
+
+class HyperExampleProvider extends ChangeNotifier {
+  HyperExampleState _state = HyperExampleState();
+  
+  HyperExampleState get state => _state;
+
+  Future<void> initializeData() async {
+    _state = _state.copyWith(status: HyperExampleStatus.loading);
+    notifyListeners();
+
+    try {
+      // Simulate API call
+      await Future.delayed(const Duration(seconds: 2));
+      _state = _state.copyWith(status: HyperExampleStatus.loaded);
+      notifyListeners();
+    } catch (e) {
+      _state = _state.copyWith(
+        status: HyperExampleStatus.error,
+        errorMessage: e.toString(),
+      );
+      notifyListeners();
+    }
+  }
+
+  void increment() {
+    _state = _state.copyWith(counter: _state.counter + 1);
+    notifyListeners();
+  }
+
+  void decrement() {
+    _state = _state.copyWith(counter: _state.counter - 1);
+    notifyListeners();
+  }
+}
+---
+@@@lib/presentation/hyper_example/widget/_
+---
