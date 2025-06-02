@@ -56,3 +56,13 @@ export const verifyToken = async (req, res, next) => {
     return res.status(401).json({ message: 'Token tidak valid' });
   }
 };
+
+// Add isAdmin middleware
+export const isAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({
+      message: 'Akses ditolak! Hanya admin yang dapat mengakses fitur ini.',
+    });
+  }
+  next();
+};

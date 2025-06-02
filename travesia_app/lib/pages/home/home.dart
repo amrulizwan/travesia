@@ -4,6 +4,9 @@ import 'package:travesia_app/pages/auth/login.dart';
 import 'package:travesia_app/utils/alert_utils.dart';
 import 'package:travesia_app/pages/wisata/wisata_list_page.dart'; // Import WisataListPage
 import 'package:travesia_app/pages/ticket/my_tickets_page.dart'; // Import MyTicketsPage
+import '../../models/province.dart';
+import '../../services/province_service.dart';
+import '../../services/api_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,6 +16,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  late final ProvinceService _provinceService;
+  late Future<List<Province>> _provincesFuture;
+  bool _isLoading = false;
+
   final List<String> imageUrls = [
     'assets/images/slide1.png',
     'assets/images/slide2.png',
@@ -41,7 +48,6 @@ class _HomePageState extends State<HomePage> {
   };
 
   late AuthService _authService;
-  bool _isLoading = false;
   Map<String, dynamic> userData = {};
 
   final PageController _pageController = PageController();
@@ -59,6 +65,10 @@ class _HomePageState extends State<HomePage> {
         });
       }
     });
+
+    final apiService = ApiService();
+    _provinceService = ProvinceService(apiService);
+    _fetchProvinces();
   }
 
   @override
@@ -109,6 +119,12 @@ class _HomePageState extends State<HomePage> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _fetchProvinces() async {
+    setState(() => _isLoading = true);
+    _provincesFuture = _provinceService.getAllProvinces();
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -378,6 +394,71 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                     ),
+                    const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        'Provinsi',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    FutureBuilder<List<Province>>(
+                      future: _provincesFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(color: Colors.red),
+                          );
+                        }
+
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'Error: ${snapshot.error}',
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: _fetchProvinces,
+                                    child: const Text('Coba Lagi'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Center(
+                            child: Text('Tidak ada data provinsi'),
+                          );
+                        }
+
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(16),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: 0.8,
+                          ),
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, index) {
+                            final province = snapshot.data![index];
+                            return _buildProvinceCard(province);
+                          },
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -431,6 +512,70 @@ class _HomePageState extends State<HomePage> {
                 fontSize: 12,
                 color: Colors.red,
                 fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProvinceCard(Province province) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: () {
+          // Navigate to province detail or wisata list filtered by province
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WisataListPage(provinceId: province.id),
+            ),
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(12)),
+                child: Image.network(
+                  province.image,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.image_not_supported, size: 50),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    province.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Kode: ${province.code}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

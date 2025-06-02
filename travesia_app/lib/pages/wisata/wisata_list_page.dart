@@ -6,7 +6,9 @@ import '../../services/wisata_service.dart';
 import 'wisata_detail_page.dart'; // Import WisataDetailPage
 
 class WisataListPage extends StatefulWidget {
-  const WisataListPage({super.key});
+  final String? provinceId;
+
+  const WisataListPage({super.key, this.provinceId});
 
   @override
   State<WisataListPage> createState() => _WisataListPageState();
@@ -34,11 +36,13 @@ class _WisataListPageState extends State<WisataListPage> {
       _errorMessage = null;
     });
     try {
-      _wisataListFuture = _wisataService.getAllWisata();
-      // To ensure loading state is handled correctly with FutureBuilder
-      // We can await here and then manage state, or let FutureBuilder handle it.
-      // For this example, FutureBuilder will primarily handle states.
-      await _wisataListFuture; // Await to catch initial load errors here if needed
+      if (widget.provinceId != null) {
+        // Add province filter to the API call
+        _wisataListFuture = _wisataService.getWisataByProvince(widget.provinceId!);
+      } else {
+        _wisataListFuture = _wisataService.getAllWisata();
+      }
+      await _wisataListFuture;
     } catch (e) {
       if (mounted) {
         setState(() {
