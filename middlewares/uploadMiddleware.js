@@ -13,21 +13,8 @@ const s3Client = new S3Client({
   },
 });
 
-// Configure storage for different types of uploads
-const s3Storage = multerS3({
-  s3: s3Client,
-  bucket: process.env.CLOUDFLARE_IMAGE_BUCKET,
-  metadata: function (req, file, cb) {
-    cb(null, { fieldName: file.fieldname });
-  },
-  key: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, 'provinces/' + uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
-// File filter function
-const fileFilter = (req, file, cb) => {
+// Common file filter function
+const imageFileFilter = (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
@@ -36,12 +23,35 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// Configure storage with different paths for different types
+const createS3Storage = (folder) => {
+  return multerS3({
+    s3: s3Client,
+    bucket: process.env.CLOUDFLARE_IMAGE_BUCKET,
+    metadata: (req, file, cb) => {
+      cb(null, { fieldName: file.fieldname });
+    },
+    key: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      cb(null, `${folder}/${uniqueSuffix}${path.extname(file.originalname)}`);
+    },
+  });
+};
+
 // Export multer configurations for different upload types
-export const provinceUpload = multer({
-  storage: s3Storage,
-  fileFilter: fileFilter,
+export const profileUpload = multer({
+  storage: createS3Storage('profiles'),
+  fileFilter: imageFileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
+    fileSize: 2 * 1024 * 1024, // 2MB for profile pictures
+  },
+});
+
+export const provinceUpload = multer({
+  storage: createS3Storage('provinces'),
+  fileFilter: imageFileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB for province images
   },
 });
 
@@ -49,7 +59,9 @@ export const provinceUpload = multer({
 export const handleUploadError = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ message: 'File terlalu besar. Maksimal 5MB.' });
+      return res.status(400).json({
+        message: `File terlalu besar. Maksimal ${req.route.path.includes('profile') ? '2MB' : '5MB'}.`,
+      });
     }
     return res.status(400).json({ message: err.message });
   }
