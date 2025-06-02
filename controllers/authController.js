@@ -119,3 +119,72 @@ export const verifyResetPassword = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User tidak ditemukan' });
+    }
+    res.status(200).json({ user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { nama, email, telepon } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User tidak ditemukan' });
+    }
+
+    // Check if email is being changed and if it's already in use
+    if (email !== user.email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+        return res.status(400).json({ message: 'Email sudah digunakan' });
+      }
+    }
+
+    user.nama = nama || user.nama;
+    user.email = email || user.email;
+    user.telepon = telepon || user.telepon;
+
+    await user.save();
+    const updatedUser = await User.findById(user._id).select('-password');
+
+    res.status(200).json({
+      message: 'Profil berhasil diperbarui',
+      user: updatedUser,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateProfilePicture = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Foto profil tidak ditemukan' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User tidak ditemukan' });
+    }
+
+    // Update foto profil
+    user.fotoProfil = req.file.location; // Assuming using S3 or similar
+    await user.save();
+
+    res.status(200).json({
+      message: 'Foto profil berhasil diperbarui',
+      fotoProfil: user.fotoProfil,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

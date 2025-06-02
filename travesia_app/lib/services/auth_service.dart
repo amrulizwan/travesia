@@ -93,22 +93,37 @@ class AuthService {
         'password': password,
       });
 
-      if (response != null &&
-          response['token'] != null &&
-          response['user'] != null) {
-        await _saveAuthData(response['token'], response['user']);
-        _apiService.setAuthToken(response['token']);
-        return {
-          'success': true,
-          'user': User.fromJson(response['user']),
-          'token': response['token']
-        };
-      } else {
-        // Handle cases where response might be missing token/user or have an error message
+      if (response == null || response is! Map<String, dynamic>) {
         return {
           'success': false,
-          'message': response['message'] ??
-              'Login failed: Invalid response from server'
+          'message': 'Login gagal: Tidak ada respons dari server'
+        };
+      }
+
+      // Type-safe conversion of response data
+      final token = response['token'] as String?;
+      final user = response['user'] as Map<String, dynamic>?;
+      final refreshToken = response['refreshToken'] as String?;
+
+      if (token != null && user != null) {
+        // Save both main token and refresh token
+        await _saveAuthData(token, user);
+        if (refreshToken != null) {
+          await _secureStorage.write(key: 'refresh_token', value: refreshToken);
+        }
+        _apiService.setAuthToken(token);
+
+        return {
+          'success': true,
+          'user': User.fromJson(user),
+          'token': token,
+          'refreshToken': refreshToken,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': (response['message'] as String?) ??
+              'Login gagal: Data tidak lengkap'
         };
       }
     } catch (e) {
@@ -118,34 +133,40 @@ class AuthService {
       }
 
       String userFriendlyMessage = 'Login gagal: Terjadi kesalahan.';
-      List<String> parts = rawMessage.splitN(': ', 2);
+      List<String> parts = rawMessage.split(': ');
       if (parts.length == 2) {
         String statusCode = parts[0];
         String apiMessage = parts[1];
 
-        if (statusCode == '401') {
-          // Unauthorized
-          userFriendlyMessage = 'Login gagal: Email atau password salah.';
-        } else if (statusCode == '400') {
-          // Bad Request
-          userFriendlyMessage =
-              'Login gagal: $apiMessage'; // e.g. "Email is required"
-        }
-        // Add more specific status code handling if needed
-        else {
-          userFriendlyMessage = 'Login gagal: $apiMessage';
+        switch (statusCode) {
+          case '401':
+            userFriendlyMessage = 'Login gagal: Email atau password salah.';
+            break;
+          case '403':
+            userFriendlyMessage = 'Login gagal: Akun Anda telah diblokir.';
+            break;
+          case '404':
+            userFriendlyMessage = 'Login gagal: Email tidak ditemukan.';
+            break;
+          default:
+            userFriendlyMessage = 'Login gagal: $apiMessage';
         }
       } else {
         userFriendlyMessage = 'Login gagal: $rawMessage';
       }
+
       return {'success': false, 'message': userFriendlyMessage};
     }
   }
 
   Future<void> _saveAuthData(
       String token, Map<String, dynamic> userData) async {
-    await _secureStorage.write(key: _tokenKey, value: token);
-    await _secureStorage.write(key: _userKey, value: jsonEncode(userData));
+    try {
+      await _secureStorage.write(key: _tokenKey, value: token);
+      await _secureStorage.write(key: _userKey, value: jsonEncode(userData));
+    } catch (e) {
+      throw Exception('Failed to save auth data: $e');
+    }
   }
 
   Future<String?> getToken() async {
@@ -177,17 +198,10 @@ class AuthService {
   Future<bool> isLoggedIn() async {
     final token = _prefs.getString('token');
     if (token != null) {
-      // Optionally: verify token with a lightweight backend call if needed.
-      // For now, just having a token means logged in.
-      _apiService
-          .setAuthToken(token); // Make sure ApiService is aware of the token.
-
-      // Attempt to load user data. If it fails (e.g., corrupted data),
-      // consider it as not properly logged in, clear storage and return false.
+      _apiService.setAuthToken(token);
       User? user = await getUser();
       if (user == null) {
-        // Token exists but no valid user data, likely an inconsistent state or data corruption.
-        await logout(); // Log out to clear inconsistent state.
+        await logout();
         return false;
       }
       return true;
@@ -197,16 +211,16 @@ class AuthService {
 
   Future<Map<String, dynamic>?> getUserInfo() async {
     try {
-      final token = await getToken(); // Use the getToken method we already have
+      final token = await getToken();
       if (token == null) return null;
 
-      _apiService.setAuthToken(token); // Set the token in ApiService
-      final response = await _apiService.get('/user/profile');
+      _apiService.setAuthToken(token);
+      final response = await _apiService.get('user/profile');
 
       if (response != null) {
         return response;
       } else {
-        await logout(); // Token expired or invalid
+        await logout();
         return null;
       }
     } catch (e) {
@@ -216,13 +230,14 @@ class AuthService {
 
   Future<Map<String, dynamic>> requestResetPassword(String email) async {
     try {
-      final response = await _apiService.post('auth/forgot-password', {
+      final response = await _apiService.post('auth/request-reset-password', {
         'email': email,
       });
 
       return {
         'success': true,
-        'message': response['message'] ?? 'OTP sent successfully',
+        'message':
+            response['message'] ?? 'Reset password code sent successfully',
       };
     } catch (e) {
       return {
@@ -232,16 +247,16 @@ class AuthService {
     }
   }
 
-  Future<Map<String, dynamic>> verifyResetPassword({
+  Future<Map<String, dynamic>> verifyAndResetPassword({
     required String email,
     required String otp,
     required String newPassword,
   }) async {
     try {
-      final response = await _apiService.post('auth/reset-password', {
+      final response = await _apiService.post('auth/verify-reset-password', {
         'email': email,
         'otp': otp,
-        'password': newPassword,
+        'newPassword': newPassword,
       });
 
       return {
@@ -249,9 +264,22 @@ class AuthService {
         'message': response['message'] ?? 'Password reset successfully',
       };
     } catch (e) {
+      String errorMessage = e.toString();
+      if (errorMessage.contains('500')) {
+        return {
+          'success': false,
+          'message': 'Server error: Please try again later',
+        };
+      }
+      if (errorMessage.contains('undefined number')) {
+        return {
+          'success': false,
+          'message': 'Invalid OTP code. Please check and try again.',
+        };
+      }
       return {
         'success': false,
-        'message': e.toString(),
+        'message': 'An error occurred: ${e.toString()}',
       };
     }
   }

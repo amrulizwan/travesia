@@ -65,7 +65,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     setState(() => _isLoading = true);
 
     try {
-      final result = await _authService.verifyResetPassword(
+      final result = await _authService.verifyAndResetPassword(
         email: widget.email,
         otp: _otp,
         newPassword: _passwordController.text,

@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 class ApiService {
   // Change the base URL to match your backend server
   final String _baseUrl =
-      "http://localhost:3009/api"; // Or your actual server URL
+      "https://v2.aisadev.id/api"; // Or your actual server URL
   String? _token;
 
   void setAuthToken(String token) {
@@ -57,9 +57,11 @@ class ApiService {
     return _handleResponse(response);
   }
 
-  Future<dynamic> postMultipart(String endpoint, String filePath, {Map<String, String>? fields}) async {
+  Future<dynamic> postMultipart(String endpoint, String filePath,
+      {Map<String, String>? fields}) async {
     try {
-      var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/$endpoint'));
+      var request =
+          http.MultipartRequest('POST', Uri.parse('$_baseUrl/$endpoint'));
 
       // Set up headers for multipart request
       // http.MultipartRequest will set the 'Content-Type' to 'multipart/form-data' automatically

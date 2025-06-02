@@ -3,42 +3,34 @@ class User {
   final String id;
   final String nama;
   final String email;
-  final String role;
   final String? fotoProfil;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final String role;
 
   User({
     required this.id,
     required this.nama,
     required this.email,
-    required this.role,
     this.fotoProfil,
-    required this.createdAt,
-    required this.updatedAt,
+    required this.role,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id_user'] as String,
-      nama: json['nama'] as String,
-      email: json['email'] as String,
-      role: json['role'] as String,
-      fotoProfil: json['foto_profil'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      id: json['id']?.toString() ?? '',
+      nama: json['nama']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      fotoProfil: json['fotoProfil']?.toString(),
+      role: json['role']?.toString() ?? 'pengunjung',
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id_user': id,
+      'id': id,
       'nama': nama,
       'email': email,
+      'fotoProfil': fotoProfil,
       'role': role,
-      'foto_profil': fotoProfil,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
     };
   }
 }

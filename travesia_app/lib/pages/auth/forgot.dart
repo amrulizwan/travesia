@@ -15,6 +15,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   late final AuthService _authService;
   final _emailController = TextEditingController();
   bool _isLoading = false;
+  bool _isAuthInitialized = false;
 
   @override
   void initState() {
@@ -23,7 +24,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 
   Future<void> _initializeAuthService() async {
-    _authService = await AuthService.init();
+    try {
+      _authService = await AuthService.init();
+      setState(() {
+        _isAuthInitialized = true;
+      });
+    } catch (e) {
+      if (mounted) {
+        AlertUtils.showError(
+            context, 'Failed to initialize authentication service');
+      }
+    }
   }
 
   @override
@@ -33,6 +44,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 
   Future<void> _requestResetPassword() async {
+    if (!_isAuthInitialized) {
+      AlertUtils.showWarning(context, 'Please wait while initializing...');
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -54,6 +70,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         );
       } else {
         AlertUtils.showError(context, result['message']);
+      }
+    } catch (e) {
+      if (mounted) {
+        AlertUtils.showError(context, 'Failed to request password reset: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
