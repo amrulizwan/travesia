@@ -23,7 +23,7 @@ const wisataSchema = new mongoose.Schema({
       name: { type: String, required: true }, // e.g., "Dewasa", "Anak-Anak", "Pelajar", "VIP"
       price: { type: Number, required: true, min: 0 },
       description: { type: String }, // Optional description
-    }
+    },
   ],
   galeri: [
     {
@@ -53,6 +53,11 @@ const wisataSchema = new mongoose.Schema({
     minggu: String,
   },
   pengelola: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  province: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Province',
+    required: true,
+  },
 });
 
 const Wisata = mongoose.model('Wisata', wisataSchema);

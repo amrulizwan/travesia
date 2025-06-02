@@ -215,7 +215,7 @@ class AuthService {
       if (token == null) return null;
 
       _apiService.setAuthToken(token);
-      final response = await _apiService.get('user/profile');
+      final response = await _apiService.get('auth/profile');
 
       if (response != null) {
         return response;

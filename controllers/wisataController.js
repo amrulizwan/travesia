@@ -1,11 +1,33 @@
 import Wisata from '../models/Wisata.js';
 import User from '../models/User.js'; // Added import
+import Province from '../models/Province.js'; // Added import
 import mongoose from 'mongoose'; // Added import
 
 // Modified tambahWisata
 export const tambahWisata = async (req, res) => {
   try {
-    const { nama, deskripsi, lokasi, ticketTypes, kontak, jamOperasional, kategori, fasilitas, pengelolaId /* hargaTiket removed, ticketTypes added */ } = req.body;
+    const {
+      nama,
+      deskripsi,
+      lokasi,
+      ticketTypes,
+      kontak,
+      jamOperasional,
+      kategori,
+      fasilitas,
+      pengelolaId,
+      provinceId, // Add this
+    } = req.body;
+
+    // Validate province
+    if (!provinceId || !mongoose.Types.ObjectId.isValid(provinceId)) {
+      return res.status(400).json({ message: 'Province ID is required and must be valid' });
+    }
+
+    const province = await Province.findById(provinceId);
+    if (!province) {
+      return res.status(404).json({ message: 'Province not found' });
+    }
 
     // Initial access control: only admin or pengelola can attempt to add
     if (req.user.role !== 'admin' && req.user.role !== 'pengelola') {
@@ -52,6 +74,7 @@ export const tambahWisata = async (req, res) => {
       kategori,
       fasilitas, // Assuming fasilitas is an array of ObjectIds or handled by schema
       pengelola: assignedPengelolaId,
+      province: provinceId, // Add this
     });
 
     await wisataBaru.save();
@@ -59,13 +82,13 @@ export const tambahWisata = async (req, res) => {
     // Also, add this new Wisata to the 'tempatWisata' array of the assigned Pengelola
     const pengelolaUser = await User.findById(assignedPengelolaId);
     if (pengelolaUser && !pengelolaUser.tempatWisata.includes(wisataBaru._id)) {
-        pengelolaUser.tempatWisata.push(wisataBaru._id);
-        await pengelolaUser.save();
+      pengelolaUser.tempatWisata.push(wisataBaru._id);
+      await pengelolaUser.save();
     }
 
     res.status(201).json({ message: 'Wisata berhasil ditambahkan!', data: wisataBaru });
   } catch (error) {
-    console.error("Error in tambahWisata:", error);
+    console.error('Error in tambahWisata:', error);
     res.status(500).json({ message: 'Terjadi kesalahan server!', error: error.message });
   }
 };
@@ -84,7 +107,7 @@ export const updateWisata = async (req, res) => {
 
     // Prevent pengelola from changing the 'pengelola' field directly via this general update route
     if (req.user.role === 'pengelola' && req.body.pengelola && req.body.pengelola.toString() !== wisata.pengelola.toString()) {
-        return res.status(403).json({ message: 'Pengelola tidak dapat mengubah kepemilikan wisata melalui rute ini. Gunakan rute khusus jika tersedia dan diizinkan.' });
+      return res.status(403).json({ message: 'Pengelola tidak dapat mengubah kepemilikan wisata melalui rute ini. Gunakan rute khusus jika tersedia dan diizinkan.' });
     }
 
     // If admin is updating and wants to change pengelola, they should use the dedicated route.
@@ -98,20 +121,20 @@ export const updateWisata = async (req, res) => {
     // Items with existing _ids will be updated, new items without _ids added, old items not present removed.
     // Add validation for incoming ticketTypes in update if necessary
     if (req.body.ticketTypes) {
-        if (!Array.isArray(req.body.ticketTypes) || req.body.ticketTypes.length === 0) {
-            return res.status(400).json({ message: 'If providing ticketTypes, it must be a non-empty array.' });
+      if (!Array.isArray(req.body.ticketTypes) || req.body.ticketTypes.length === 0) {
+        return res.status(400).json({ message: 'If providing ticketTypes, it must be a non-empty array.' });
+      }
+      for (const tt of req.body.ticketTypes) {
+        if (!tt.name || typeof tt.price !== 'number' || tt.price < 0) {
+          return res.status(400).json({ message: 'Each ticket type must have a valid name and non-negative price.' });
         }
-        for (const tt of req.body.ticketTypes) {
-            if (!tt.name || typeof tt.price !== 'number' || tt.price < 0) {
-                return res.status(400).json({ message: 'Each ticket type must have a valid name and non-negative price.' });
-            }
-        }
+      }
     }
 
     const updatedWisata = await Wisata.findByIdAndUpdate(id, req.body, { new: true }).populate('pengelola', 'nama email');
     res.json({ message: 'Wisata berhasil diperbarui!', data: updatedWisata });
   } catch (error) {
-    console.error("Error in updateWisata:", error);
+    console.error('Error in updateWisata:', error);
     res.status(500).json({ message: 'Terjadi kesalahan server!', error: error.message });
   }
 };
@@ -134,13 +157,13 @@ export const hapusWisata = async (req, res) => {
     await Wisata.findByIdAndDelete(id);
 
     // Remove Wisata from the pengelola's list
-    if(pengelolaId){
-        await User.findByIdAndUpdate(pengelolaId, { $pull: { tempatWisata: id } });
+    if (pengelolaId) {
+      await User.findByIdAndUpdate(pengelolaId, { $pull: { tempatWisata: id } });
     }
 
     res.json({ message: 'Wisata berhasil dihapus!' });
   } catch (error) {
-    console.error("Error in hapusWisata:", error);
+    console.error('Error in hapusWisata:', error);
     res.status(500).json({ message: 'Terjadi kesalahan server!', error: error.message });
   }
 };
@@ -158,7 +181,7 @@ export const tambahGambarGaleri = async (req, res) => {
     }
 
     if (!req.file) {
-        return res.status(400).json({ message: 'Tidak ada file gambar yang diunggah.' });
+      return res.status(400).json({ message: 'Tidak ada file gambar yang diunggah.' });
     }
 
     const gambarBaru = {
@@ -173,12 +196,11 @@ export const tambahGambarGaleri = async (req, res) => {
     await wisata.save();
 
     const populatedWisata = await Wisata.findById(id).populate('galeri.uploadedBy', 'nama email');
-    const newImageResponse = populatedWisata.galeri.find(g => g.url === gambarBaru.url);
-
+    const newImageResponse = populatedWisata.galeri.find((g) => g.url === gambarBaru.url);
 
     res.status(201).json({ message: 'Gambar berhasil ditambahkan!', data: newImageResponse });
   } catch (error) {
-    console.error("Error in tambahGambarGaleri:", error);
+    console.error('Error in tambahGambarGaleri:', error);
     res.status(500).json({ message: 'Terjadi kesalahan server!', error: error.message });
   }
 };
@@ -194,7 +216,7 @@ export const verifikasiGambarGaleri = async (req, res) => {
     }
 
     if (!status || !['verified', 'rejected'].includes(status)) {
-        return res.status(400).json({ message: 'Status tidak valid. Harus "verified" atau "rejected".' });
+      return res.status(400).json({ message: 'Status tidak valid. Harus "verified" atau "rejected".' });
     }
 
     const wisata = await Wisata.findById(wisataId);
@@ -211,7 +233,7 @@ export const verifikasiGambarGaleri = async (req, res) => {
 
     res.json({ message: `Gambar berhasil ${status}!`, data: updatedImageResponse });
   } catch (error) {
-    console.error("Error in verifikasiGambarGaleri:", error);
+    console.error('Error in verifikasiGambarGaleri:', error);
     res.status(500).json({ message: 'Terjadi kesalahan server!', error: error.message });
   }
 };
@@ -220,39 +242,32 @@ export const verifikasiGambarGaleri = async (req, res) => {
 export const getAllWisata = async (req, res) => {
   try {
     // For now, this is a public route. Filter by status or pengelola can be added.
-    const wisataList = await Wisata.find({ 'statusPublikasi': 'published' }) // Example: only show published
-        .populate('pengelola', 'nama email')
-        .populate('fasilitas'); // Assuming Fasilitas model and refs are set up
+    const wisataList = await Wisata.find({ statusPublikasi: 'published' }) // Example: only show published
+      .populate('pengelola', 'nama email')
+      .populate('fasilitas'); // Assuming Fasilitas model and refs are set up
     res.json({ data: wisataList });
   } catch (error) {
-    console.error("Error in getAllWisata:", error);
+    console.error('Error in getAllWisata:', error);
     res.status(500).json({ message: 'Terjadi kesalahan server!', error: error.message });
   }
 };
 
-
 // Admin: Get All Wisata (including not published, etc for admin view)
 export const adminGetAllWisata = async (req, res) => {
-    try {
-        // This route is admin only, so show all regardless of statusPublikasi
-        const wisataList = await Wisata.find()
-            .populate('pengelola', 'nama email')
-            .populate('fasilitas');
-        res.json({ data: wisataList });
-    } catch (error) {
-        console.error("Error in adminGetAllWisata:", error);
-        res.status(500).json({ message: 'Terjadi kesalahan server!', error: error.message });
-    }
+  try {
+    // This route is admin only, so show all regardless of statusPublikasi
+    const wisataList = await Wisata.find().populate('pengelola', 'nama email').populate('fasilitas');
+    res.json({ data: wisataList });
+  } catch (error) {
+    console.error('Error in adminGetAllWisata:', error);
+    res.status(500).json({ message: 'Terjadi kesalahan server!', error: error.message });
+  }
 };
-
 
 // 🔹 Ambil detail wisata berdasarkan ID (public)
 export const getWisataById = async (req, res) => {
   try {
-    const wisata = await Wisata.findById(req.params.id)
-        .populate('pengelola', 'nama email')
-        .populate('fasilitas')
-        .populate('galeri.uploadedBy', 'nama email'); // Populate uploader details for gallery images
+    const wisata = await Wisata.findById(req.params.id).populate('pengelola', 'nama email').populate('fasilitas').populate('galeri.uploadedBy', 'nama email'); // Populate uploader details for gallery images
 
     if (!wisata) return res.status(404).json({ message: 'Wisata tidak ditemukan!' });
 
@@ -263,7 +278,7 @@ export const getWisataById = async (req, res) => {
 
     res.json({ data: wisata });
   } catch (error) {
-    console.error("Error in getWisataById:", error);
+    console.error('Error in getWisataById:', error);
     res.status(500).json({ message: 'Terjadi kesalahan server!', error: error.message });
   }
 };
@@ -289,7 +304,7 @@ export const changeWisataPengelola = async (req, res) => {
     const oldPengelolaId = wisata.pengelola;
 
     if (oldPengelolaId && oldPengelolaId.toString() === newPengelolaId) {
-        return res.status(400).json({ message: 'New Pengelola is the same as the current one.' });
+      return res.status(400).json({ message: 'New Pengelola is the same as the current one.' });
     }
 
     const newPengelola = await User.findById(newPengelolaId);
@@ -306,20 +321,45 @@ export const changeWisataPengelola = async (req, res) => {
 
     // Update old Pengelola's tempatWisata array (remove this wisata)
     if (oldPengelolaId) {
-        await User.findByIdAndUpdate(oldPengelolaId, { $pull: { tempatWisata: wisataId } });
+      await User.findByIdAndUpdate(oldPengelolaId, { $pull: { tempatWisata: wisataId } });
     }
 
     // Update new Pengelola's tempatWisata array (add this wisata)
-    if (!newPengelola.tempatWisata.includes(wisataId)) { // Check if it's already there
-        await User.findByIdAndUpdate(newPengelolaId, { $addToSet: { tempatWisata: wisataId } });
+    if (!newPengelola.tempatWisata.includes(wisataId)) {
+      // Check if it's already there
+      await User.findByIdAndUpdate(newPengelolaId, { $addToSet: { tempatWisata: wisataId } });
     }
 
     const populatedWisata = await Wisata.findById(wisataId).populate('pengelola', 'nama email');
 
     res.status(200).json({ message: 'Wisata Pengelola updated successfully', data: populatedWisata });
-
   } catch (error) {
     console.error('Error changing Wisata Pengelola:', error);
     res.status(500).json({ message: 'Server error while changing Wisata Pengelola', error: error.message });
+  }
+};
+
+// Seed provinces (admin only)
+export const seedProvinces = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Akses ditolak! Hanya admin yang dapat melakukan seed data.' });
+    }
+
+    // Example static data, replace with your actual seeding logic
+    const provinces = [
+      { nama: 'Jawa Barat', kode: 'JB' },
+      { nama: 'Jawa Tengah', kode: 'JT' },
+      { nama: 'Jawa Timur', kode: 'JT' },
+      // Add more provinces as needed
+    ];
+
+    await Province.deleteMany({}); // Clear existing for demo, be careful with this!
+    const result = await Province.insertMany(provinces);
+
+    res.status(201).json({ message: 'Provinces seeded successfully', data: result });
+  } catch (error) {
+    console.error('Error seeding provinces:', error);
+    res.status(500).json({ message: 'Terjadi kesalahan server!', error: error.message });
   }
 };
