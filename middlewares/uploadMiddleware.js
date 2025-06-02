@@ -1,11 +1,10 @@
 import multer from 'multer';
 import { S3Client } from '@aws-sdk/client-s3';
 import multerS3 from 'multer-s3';
-import dotenv from 'dotenv';
+import path from 'path';
 
-dotenv.config();
-
-const s3 = new S3Client({
+// Configure S3 (Cloudflare R2)
+const s3Client = new S3Client({
   region: 'auto',
   endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
   credentials: {
@@ -14,55 +13,48 @@ const s3 = new S3Client({
   },
 });
 
-const createMulterUpload = (bucket) => {
-  if (!bucket) {
-    throw new Error(`Bucket name is not configured in environment variables`);
-  }
+// Configure storage for different types of uploads
+const s3Storage = multerS3({
+  s3: s3Client,
+  bucket: process.env.CLOUDFLARE_IMAGE_BUCKET,
+  metadata: function (req, file, cb) {
+    cb(null, { fieldName: file.fieldname });
+  },
+  key: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, 'provinces/' + uniqueSuffix + path.extname(file.originalname));
+  },
+});
 
-  return multer({
-    storage: multerS3({
-      s3,
-      bucket,
-      ACL: 'public-read',
-      metadata: (req, file, cb) => {
-        cb(null, { fieldName: file.fieldname });
-      },
-      key: (req, file, cb) => {
-        cb(null, `${Date.now().toString()}-${file.originalname}`);
-      },
-    }),
-  });
+// File filter function
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only JPEG, PNG, and WebP images are allowed.'), false);
+  }
 };
 
-// Validate bucket names before creating uploaders
-const validateBucket = (bucketName, envVar) => {
-  if (!bucketName) {
-    throw new Error(`${envVar} is not configured in environment variables`);
-  }
-  return bucketName;
-};
-
-export const imageUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_IMAGE_BUCKET, 'CLOUDFLARE_IMAGE_BUCKET'));
-export const chatImageUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_CHAT_IMAGE_BUCKET, 'CLOUDFLARE_CHAT_IMAGE_BUCKET'));
-export const bannerUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_BANNER_BUCKET, 'CLOUDFLARE_BANNER_BUCKET'));
-export const audioUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_AUDIO_BUCKET, 'CLOUDFLARE_AUDIO_BUCKET'));
-export const fileUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_FILE_BUCKET, 'CLOUDFLARE_FILE_BUCKET'));
-export const profileUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_PROFILE_BUCKET, 'CLOUDFLARE_PROFILE_BUCKET'));
-export const iconsUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_ICON_BUCKET, 'CLOUDFLARE_ICON_BUCKET'));
-export const galleryUpload = createMulterUpload(validateBucket(process.env.CLOUDFLARE_IMAGE_BUCKET, 'CLOUDFLARE_IMAGE_BUCKET'));
-
+// Export multer configurations for different upload types
 export const provinceUpload = multer({
   storage: s3Storage,
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only images are allowed.'), false);
-    }
-  },
+  fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 5 * 1024 * 1024, // 5MB
   },
-}).single('image');
+});
 
-export { s3 };
+// Error handling middleware
+export const handleUploadError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ message: 'File terlalu besar. Maksimal 5MB.' });
+    }
+    return res.status(400).json({ message: err.message });
+  }
+  if (err) {
+    return res.status(400).json({ message: err.message });
+  }
+  next();
+};
