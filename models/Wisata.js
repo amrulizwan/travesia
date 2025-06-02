@@ -58,6 +58,11 @@ const wisataSchema = new mongoose.Schema({
     ref: 'Province',
     required: true,
   },
+  kategori: {
+    type: String,
+    required: true,
+    enum: ['Alam', 'Pantai', 'Sejarah & Budaya', 'Wisata Kota', 'Hiburan', 'Edukasi'],
+  },
 });
 
 const Wisata = mongoose.model('Wisata', wisataSchema);

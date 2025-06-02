@@ -36,17 +36,6 @@ class _HomePageState extends State<HomePage> {
     {'name': 'Sumbawa', 'image': 'assets/images/slide1.png'},
   ];
 
-  // New item for navigating to WisataListPage
-  final Map<String, dynamic> _allWisataNavigationItem = {
-    'name': 'Semua Wisata',
-    'icon': Icons.tour_outlined,
-  };
-
-  final Map<String, dynamic> _myTicketsNavigationItem = {
-    'name': 'Tiket Saya',
-    'icon': Icons.confirmation_number_outlined,
-  };
-
   late AuthService _authService;
   Map<String, dynamic> userData = {};
 
@@ -244,220 +233,107 @@ class _HomePageState extends State<HomePage> {
                     ),
                     Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                        ),
-                        itemCount: destinations.length +
-                            3, // +1 More, +1 Semua Wisata, +1 Tiket Saya
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            // "Semua Wisata"
-                            return _buildGridNavigationItem(
-                              _allWisataNavigationItem['name'] as String,
-                              _allWisataNavigationItem['icon'] as IconData,
-                              () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          const WisataListPage())),
-                            );
-                          }
-                          if (index == 1) {
-                            // "Tiket Saya"
-                            return _buildGridNavigationItem(
-                              _myTicketsNavigationItem['name'] as String,
-                              _myTicketsNavigationItem['icon'] as IconData,
-                              () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          const MyTicketsPage())),
+                      child: FutureBuilder<List<Province>>(
+                        future: _provincesFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child:
+                                  CircularProgressIndicator(color: Colors.red),
                             );
                           }
 
-                          // Adjust index for destinations and "More" button
-                          final itemIndex = index - 2;
-
-                          if (itemIndex == destinations.length) {
-                            // "More" button
-                            return InkWell(
-                              onTap: () {
-                                /* TODO: Implement 'More' functionality */
-                              },
-                              borderRadius: BorderRadius.circular(10),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  color: Colors.grey[200],
-                                ),
-                                child: const Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                          if (snapshot.hasError) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
                                   children: [
-                                    Icon(Icons.grid_view,
-                                        color: Colors.black54),
-                                    SizedBox(height: 4),
-                                    Text('More',
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.black54)),
+                                    Text(
+                                      'Error: ${snapshot.error}',
+                                      style: const TextStyle(color: Colors.red),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: _fetchProvinces,
+                                      child: const Text('Coba Lagi'),
+                                    ),
                                   ],
                                 ),
                               ),
                             );
                           }
-                          // Regular destination items
-                          return Column(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
-                                    image: DecorationImage(
-                                      image: AssetImage(
-                                          destinations[itemIndex]['image']!),
-                                      fit: BoxFit.cover,
+
+                          final provinces = snapshot.data ?? [];
+
+                          return GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
+                            itemCount:
+                                provinces.length + 1, // +1 for More button
+                            itemBuilder: (context, index) {
+                              if (index == provinces.length) {
+                                // "More" button
+                                return InkWell(
+                                  onTap: () {
+                                    /* TODO: Implement 'More' functionality */
+                                  },
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      color: Colors.grey[200],
+                                    ),
+                                    child: const Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.grid_view,
+                                            color: Colors.black54),
+                                        SizedBox(height: 4),
+                                        Text('More',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.black54)),
+                                      ],
                                     ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                destinations[itemIndex]['name']!,
-                                style: const TextStyle(fontSize: 12),
-                                textAlign: TextAlign.center,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                                );
+                              }
+
+                              final province = provinces[index];
+                              return Column(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        image: DecorationImage(
+                                          image: NetworkImage(province.image),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    province.name,
+                                    style: const TextStyle(fontSize: 12),
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              );
+                            },
                           );
                         },
                       ),
-                    ),
-                    const SizedBox(height: 16), // Added spacing before articles
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Article',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Icon(
-                                Icons.arrow_forward,
-                                color: Colors.red,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Container(
-                            height: 150,
-                            decoration: BoxDecoration(
-                              image: const DecorationImage(
-                                image: AssetImage('assets/images/slide1.png'),
-                                fit: BoxFit.cover,
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                              color: Colors.grey[300],
-                            ),
-                            // child: const Center(
-                            //   child: Text('Festival bau nyale, harga nyale mahal...'),
-                            // ),
-                          ),
-                          const SizedBox(height: 10),
-                          Container(
-                            height: 150,
-                            decoration: BoxDecoration(
-                              image: const DecorationImage(
-                                image: AssetImage('assets/images/slide3.png'),
-                                fit: BoxFit.fitWidth,
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                              color: Colors.grey[300],
-                            ),
-                            // child: const Center(
-                            //   child: Text('Jalur di Sambalun sudah bagus, pemda...'),
-                            // ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Text(
-                        'Provinsi',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    FutureBuilder<List<Province>>(
-                      future: _provincesFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(color: Colors.red),
-                          );
-                        }
-
-                        if (snapshot.hasError) {
-                          return Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Error: ${snapshot.error}',
-                                    style: const TextStyle(color: Colors.red),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: _fetchProvinces,
-                                    child: const Text('Coba Lagi'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-
-                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Center(
-                            child: Text('Tidak ada data provinsi'),
-                          );
-                        }
-
-                        return GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: const EdgeInsets.all(16),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            childAspectRatio: 0.8,
-                          ),
-                          itemCount: snapshot.data!.length,
-                          itemBuilder: (context, index) {
-                            final province = snapshot.data![index];
-                            return _buildProvinceCard(province);
-                          },
-                        );
-                      },
                     ),
                   ],
                 ),
