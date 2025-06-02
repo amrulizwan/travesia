@@ -11,6 +11,9 @@ class AuthService {
   final String _tokenKey = 'auth_token';
   final String _userKey = 'auth_user';
 
+  // Getter for ApiService
+  ApiService get apiService => _apiService;
+
   // Private constructor
   AuthService._(this._prefs) : _apiService = ApiService();
 
