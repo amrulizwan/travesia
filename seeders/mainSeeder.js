@@ -236,10 +236,19 @@ const generateReviewsAndTickets = async (wisataList, pengunjung) => {
 // Modify the seedAll function to ensure provinces exist
 const seedAll = async () => {
   try {
+    // Enhanced MongoDB connection with better error handling
+    console.log('Connecting to MongoDB...');
     await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      authSource: 'admin', // Specify auth source
+      retryWrites: true,
+      w: 'majority',
+      serverSelectionTimeoutMS: 10000, // 10 seconds timeout
+      connectTimeoutMS: 10000,
     });
+
+    console.log('MongoDB connected successfully!');
 
     // Check if provinces exist
     const provinceCount = await Province.countDocuments();

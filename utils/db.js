@@ -5,6 +5,11 @@ const connectDB = async () => {
     await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      authSource: 'admin', // Specify auth source
+      retryWrites: true,
+      w: 'majority',
+      serverSelectionTimeoutMS: 10000, // 10 seconds timeout
+      connectTimeoutMS: 10000,
     });
     console.log('MongoDB connection established successfully');
   } catch (error) {

@@ -78,11 +78,19 @@ const uploadToS3 = async (filePath, fileName) => {
 
 const seedProvinces = async () => {
   try {
-    // Connect to MongoDB
-    await mongoose.connect('mongodb://127.0.0.1:27017/travesia', {
+    // Connect to MongoDB using environment variable
+    console.log('Connecting to MongoDB...');
+    await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      authSource: 'admin', // Specify auth source
+      retryWrites: true,
+      w: 'majority',
+      serverSelectionTimeoutMS: 10000, // 10 seconds timeout
+      connectTimeoutMS: 10000,
     });
+
+    console.log('MongoDB connected successfully!');
 
     // Clear existing provinces
     await Province.deleteMany({});
