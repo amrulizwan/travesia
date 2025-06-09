@@ -3,7 +3,6 @@ import Review from '../models/Review.js';
 import Ticket from '../models/Ticket.js';
 import Wisata from '../models/Wisata.js';
 
-// Helper function to check if user has a successful ticket for the wisata
 const hasPurchasedTicket = async (userId, wisataId) => {
     const ticket = await Ticket.findOne({
         user: userId,
@@ -13,7 +12,6 @@ const hasPurchasedTicket = async (userId, wisataId) => {
     return !!ticket;
 };
 
-// 1. Create a new review
 export const createReview = async (req, res) => {
     const { wisataId, rating, comment, ticketId } = req.body; // ticketId is optional
     const userId = req.user._id;
@@ -31,9 +29,6 @@ export const createReview = async (req, res) => {
             return res.status(404).json({ message: 'Wisata not found.' });
         }
 
-        // **Optional but recommended: Check if user has a completed ticket purchase for this Wisata**
-        // For this implementation, we'll make having *any* successful ticket for the wisata a prerequisite.
-        // A stricter check could use the provided 'ticketId' if front-end supplies it from user's ticket list.
         const canReview = await hasPurchasedTicket(userId, wisataId);
         if (!canReview) {
              return res.status(403).json({ message: 'You must have a completed ticket purchase for this Wisata to leave a review.' });
@@ -47,15 +42,13 @@ export const createReview = async (req, res) => {
         const review = new Review({
             user: userId,
             wisata: wisataId,
-            ticket: ticketId, // Store if provided
+            ticket: ticketId,
             rating,
             comment,
-            status: 'approved' // Default to 'approved'; can be changed to 'pending' for moderation
+            status: 'approved'
         });
 
         await review.save();
-        // Optionally, trigger average rating calculation here if implemented on the model
-        // await Review.calculateAverageRating(wisataId);
         res.status(201).json({ message: 'Review submitted successfully!', data: review });
     } catch (error) {
         console.error("Error creating review:", error);
@@ -63,7 +56,7 @@ export const createReview = async (req, res) => {
     }
 };
 
-// 2. Get all 'approved' reviews for a Wisata (public, paginated)
+
 export const getReviewsForWisata = async (req, res) => {
     const { wisataId } = req.params;
     const { page = 1, limit = 10 } = req.query;
@@ -96,7 +89,6 @@ export const getReviewsForWisata = async (req, res) => {
     }
 };
 
-// 3. Get a single review by ID
 export const getReviewById = async (req, res) => {
     const { reviewId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(reviewId)) {
@@ -111,10 +103,7 @@ export const getReviewById = async (req, res) => {
         if (!review) {
             return res.status(404).json({ message: 'Review not found.' });
         }
-        // Optional: Check status if non-approved reviews should be hidden from general users
-        // if (review.status !== 'approved' && (!req.user || req.user.role === 'pengunjung')) {
-        //    return res.status(404).json({ message: 'Review not found or not approved.' });
-        // }
+
         res.status(200).json({ data: review });
     } catch (error) {
         console.error("Error fetching review by ID:", error);
@@ -122,7 +111,6 @@ export const getReviewById = async (req, res) => {
     }
 };
 
-// 4. Update a review (by owner)
 export const updateReview = async (req, res) => {
     const { reviewId } = req.params;
     const { rating, comment } = req.body;
@@ -143,12 +131,9 @@ export const updateReview = async (req, res) => {
 
         if (rating) review.rating = rating;
         if (comment) review.comment = comment;
-        // Optionally, if admin approval is needed after edit, change status:
-        // review.status = 'pending';
+
 
         await review.save();
-        // Optionally, trigger average rating calculation here
-        // await Review.calculateAverageRating(review.wisata);
         res.status(200).json({ message: 'Review updated successfully.', data: review });
     } catch (error) {
         console.error("Error updating review:", error);
@@ -156,7 +141,6 @@ export const updateReview = async (req, res) => {
     }
 };
 
-// 5. Delete a review (by owner or Admin)
 export const deleteReview = async (req, res) => {
     const { reviewId } = req.params;
     const userId = req.user._id;
@@ -176,7 +160,6 @@ export const deleteReview = async (req, res) => {
             const wisataId = review.wisata; // Store before deleting
             await review.remove(); // Or review.deleteOne() in Mongoose 6+
             // Optionally, trigger average rating calculation here
-            // await Review.calculateAverageRating(wisataId);
             res.status(200).json({ message: 'Review deleted successfully.' });
         } else {
             return res.status(403).json({ message: 'You are not authorized to delete this review.' });
