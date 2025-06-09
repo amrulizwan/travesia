@@ -9,6 +9,10 @@ import Province from '../models/Province.js';
 import { getRandomImage } from './utils.js';
 import { setGlobalDispatcher, Agent } from 'undici';
 
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 const NUM_PENGELOLA = 60;
 const NUM_PENGUNJUNG = 100;
 const NUM_WISATA = 80;
@@ -232,7 +236,10 @@ const generateReviewsAndTickets = async (wisataList, pengunjung) => {
 // Modify the seedAll function to ensure provinces exist
 const seedAll = async () => {
   try {
-    await mongoose.connect('mongodb://127.0.0.1:27017/travesia');
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
 
     // Check if provinces exist
     const provinceCount = await Province.countDocuments();
