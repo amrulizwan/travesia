@@ -271,11 +271,6 @@ export const getWisataById = async (req, res) => {
 
     if (!wisata) return res.status(404).json({ message: 'Wisata tidak ditemukan!' });
 
-    // Optional: If not published and user is not admin/owner, deny access
-    // if (wisata.statusPublikasi !== 'published' && (!req.user || (req.user.role !== 'admin' && wisata.pengelola._id.toString() !== req.user._id.toString()))) {
-    //    return res.status(404).json({ message: 'Wisata tidak ditemukan atau tidak dipublikasikan.' });
-    // }
-
     res.json({ data: wisata });
   } catch (error) {
     console.error('Error in getWisataById:', error);
@@ -360,6 +355,41 @@ export const seedProvinces = async (req, res) => {
     res.status(201).json({ message: 'Provinces seeded successfully', data: result });
   } catch (error) {
     console.error('Error seeding provinces:', error);
+    res.status(500).json({ message: 'Terjadi kesalahan server!', error: error.message });
+  }
+};
+
+// 🔹 Ambil wisata berdasarkan province
+export const getWisataByProvince = async (req, res) => {
+  try {
+    const { provinceId } = req.params;
+    const { page = 1, limit = 10, sort = 'createdAt', order = 'desc' } = req.query;
+
+    if (!mongoose.Types.ObjectId.isValid(provinceId)) {
+      return res.status(400).json({ message: 'Province ID tidak valid.' });
+    }
+
+    const query = { province: provinceId };
+    const totalItems = await Wisata.countDocuments(query);
+    const totalPages = Math.ceil(totalItems / limit);
+    const wisataList = await Wisata.find(query)
+      .populate('province', 'name code')
+      .sort({ [sort]: order === 'asc' ? 1 : -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    res.json({
+      data: wisataList,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error('Error in getWisataByProvince:', error);
     res.status(500).json({ message: 'Terjadi kesalahan server!', error: error.message });
   }
 };

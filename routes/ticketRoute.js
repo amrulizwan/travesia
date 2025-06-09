@@ -1,10 +1,5 @@
 import express from 'express';
-import {
-  createTransaction,
-  handleMidtransNotification,
-  getUserTickets,
-  getSalesByWisata,
-} from '../controllers/ticketController.js';
+import { createTransaction, handleMidtransNotification, getUserTickets, getSalesByWisata } from '../controllers/ticketController.js';
 import { protect, authorizeRoles } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();

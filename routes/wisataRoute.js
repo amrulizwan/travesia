@@ -8,6 +8,7 @@ import {
   getAllWisata,
   getWisataById,
   changeWisataPengelola, // Added new function
+  getWisataByProvince,
 } from '../controllers/wisataController.js';
 import { protect, authorizeRoles } from '../middlewares/authMiddleware.js';
 import { galleryUpload } from '../middlewares/uploadMiddleware.js'; // Corrected import and Assuming galleryUpload is configured
@@ -17,6 +18,7 @@ const router = express.Router();
 // Public routes (accessible by anyone, even unauthenticated)
 router.get('/', getAllWisata); // Or use protect if all wisata should be behind login
 router.get('/:id', getWisataById);
+router.get('/province/:provinceId', getWisataByProvince);
 
 // Routes for creating, updating, deleting Wisata (Admin and Pengelola)
 router.post(
@@ -51,11 +53,6 @@ router.put(
 );
 
 // Admin: Change Pengelola of a Wisata
-router.put(
-  '/:id/assign-pengelola',
-  protect,
-  authorizeRoles('admin'),
-  changeWisataPengelola
-);
+router.put('/:id/assign-pengelola', protect, authorizeRoles('admin'), changeWisataPengelola);
 
 export default router;
