@@ -1,0 +1,906 @@
+[
+  {
+    "method": "POST",
+    "endpoint": "/auth/register",
+    "status": 400,
+    "request": {
+      "nama": "Test Admin",
+      "email": "admin@test.com",
+      "password": "password123",
+      "telepon": "081234567890",
+      "role": "admin"
+    },
+    "response": {
+      "message": "Email sudah digunakan"
+    },
+    "timestamp": "2025-06-10T03:35:52.901Z"
+  },
+  {
+    "method": "POST",
+    "endpoint": "/auth/register",
+    "status": 403,
+    "request": {
+      "nama": "Test Pengelola",
+      "email": "pengelola@test.com",
+      "password": "password123",
+      "telepon": "081234567891",
+      "role": "pengelola"
+    },
+    "response": {
+      "message": "Hanya admin yang bisa menambahkan pengelola"
+    },
+    "timestamp": "2025-06-10T03:35:53.268Z"
+  },
+  {
+    "method": "POST",
+    "endpoint": "/auth/register",
+    "status": 400,
+    "request": {
+      "nama": "Test Pengunjung",
+      "email": "pengunjung@test.com",
+      "password": "password123",
+      "telepon": "081234567892",
+      "role": "pengunjung"
+    },
+    "response": {
+      "message": "Email sudah digunakan"
+    },
+    "timestamp": "2025-06-10T03:35:53.528Z"
+  },
+  {
+    "method": "POST",
+    "endpoint": "/auth/login",
+    "status": 200,
+    "request": {
+      "email": "admin@test.com",
+      "password": "password123"
+    },
+    "response": {
+      "message": "Login berhasil",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NDczNWM5ZDhkZmQ4ZGFlODZkMzBlZiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc0OTUyNjU1MywiZXhwIjoxNzUwMTMxMzUzfQ.o3olIF36SSXWYzab9nRRWtZn89jxi2gcZr0sRF2HLmE",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NDczNWM5ZDhkZmQ4ZGFlODZkMzBlZiIsImlhdCI6MTc0OTUyNjU1MywiZXhwIjoxNzUyMTE4NTUzfQ.gcO6HNLbZfUbPDHWJN4Y7YXreRvuKb_XGGbffexXfM4",
+      "user": {
+        "id": "684735c9d8dfd8dae86d30ef",
+        "nama": "Updated Admin Name",
+        "email": "admin@test.com",
+        "role": "admin",
+        "fotoProfil": null
+      }
+    },
+    "timestamp": "2025-06-10T03:35:53.925Z"
+  },
+  {
+    "method": "POST",
+    "endpoint": "/auth/login",
+    "status": 404,
+    "request": {
+      "email": "pengelola@test.com",
+      "password": "password123"
+    },
+    "response": {
+      "message": "Email tidak ditemukan"
+    },
+    "timestamp": "2025-06-10T03:35:54.163Z"
+  },
+  {
+    "method": "POST",
+    "endpoint": "/auth/login",
+    "status": 200,
+    "request": {
+      "email": "pengunjung@test.com",
+      "password": "password123"
+    },
+    "response": {
+      "message": "Login berhasil",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NDczNWNhZDhkZmQ4ZGFlODZkMzBmMyIsInJvbGUiOiJwZW5nZWxvbGEiLCJpYXQiOjE3NDk1MjY1NTQsImV4cCI6MTc1MDEzMTM1NH0.x7DXzZFcSEOYse_KBg021ESBIWPHReFoj9Bz-D6l8a0",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NDczNWNhZDhkZmQ4ZGFlODZkMzBmMyIsImlhdCI6MTc0OTUyNjU1NCwiZXhwIjoxNzUyMTE4NTU0fQ.wVKYFjoMQkATPF48Er3wzcrvR2vaQd7IOJrEqVmSZw0",
+      "user": {
+        "id": "684735cad8dfd8dae86d30f3",
+        "nama": "Test Pengunjung",
+        "email": "pengunjung@test.com",
+        "role": "pengelola",
+        "fotoProfil": null
+      }
+    },
+    "timestamp": "2025-06-10T03:35:54.493Z"
+  },
+  {
+    "method": "GET",
+    "endpoint": "/auth/profile",
+    "status": 200,
+    "request": null,
+    "response": {
+      "user": {
+        "_id": "684735c9d8dfd8dae86d30ef",
+        "nama": "Updated Admin Name",
+        "email": "admin@test.com",
+        "fotoProfil": null,
+        "role": "admin",
+        "statusAkun": "aktif",
+        "tempatWisata": [],
+        "favoritWisata": [],
+        "tickets": [],
+        "createdAt": "2025-06-09T19:28:09.148Z",
+        "__v": 0,
+        "telepon": "081234567899",
+        "resetPasswordExpires": "2025-06-09T19:34:22.849Z",
+        "resetPasswordOTP": "296827"
+      }
+    },
+    "timestamp": "2025-06-10T03:35:54.712Z"
+  },
+  {
+    "method": "PUT",
+    "endpoint": "/auth/profile",
+    "status": 200,
+    "request": {
+      "nama": "Updated Admin Name",
+      "telepon": "081234567899"
+    },
+    "response": {
+      "message": "Profil berhasil diperbarui",
+      "user": {
+        "_id": "684735c9d8dfd8dae86d30ef",
+        "nama": "Updated Admin Name",
+        "email": "admin@test.com",
+        "fotoProfil": null,
+        "role": "admin",
+        "statusAkun": "aktif",
+        "tempatWisata": [],
+        "favoritWisata": [],
+        "tickets": [],
+        "createdAt": "2025-06-09T19:28:09.148Z",
+        "__v": 0,
+        "telepon": "081234567899",
+        "resetPasswordExpires": "2025-06-09T19:34:22.849Z",
+        "resetPasswordOTP": "296827"
+      }
+    },
+    "timestamp": "2025-06-10T03:35:54.995Z"
+  },
+  {
+    "method": "POST",
+    "endpoint": "/auth/request-reset-password",
+    "status": 200,
+    "request": {
+      "email": "admin@test.com"
+    },
+    "response": {
+      "message": "OTP telah dikirim ke email Anda"
+    },
+    "timestamp": "2025-06-10T03:35:55.453Z"
+  },
+  {
+    "method": "GET",
+    "endpoint": "/provinces",
+    "status": 200,
+    "request": null,
+    "response": {
+      "data": [
+        {
+          "_id": "68472f532d660ec4ba7dff4b",
+          "name": "Aceh",
+          "code": "ID-AC",
+          "image": "https://image.mypsikolog.id/provinces/1749495629971-vpotckgynu-id-ac.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.113Z",
+          "updatedAt": "2025-06-09T19:00:35.113Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff5b",
+          "name": "Bali",
+          "code": "ID-BA",
+          "image": "https://image.mypsikolog.id/provinces/1749495630031-zhfwi4rwc-id-ba.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.115Z",
+          "updatedAt": "2025-06-09T19:00:35.115Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff5a",
+          "name": "Banten",
+          "code": "ID-BT",
+          "image": "https://image.mypsikolog.id/provinces/1749495630026-kd6iz3bx5fl-id-bt.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.115Z",
+          "updatedAt": "2025-06-09T19:00:35.115Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff51",
+          "name": "Bengkulu",
+          "code": "ID-BE",
+          "image": "https://image.mypsikolog.id/provinces/1749495629993-tzjwtfbww9-id-be.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.115Z",
+          "updatedAt": "2025-06-09T19:00:35.115Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff58",
+          "name": "DI Yogyakarta",
+          "code": "ID-YO",
+          "image": "https://image.mypsikolog.id/provinces/1749495630010-jl8qu1i3hsq-id-yo.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.115Z",
+          "updatedAt": "2025-06-09T19:00:35.115Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff55",
+          "name": "DKI Jakarta",
+          "code": "ID-JK",
+          "image": "https://image.mypsikolog.id/provinces/1749495629999-a2zmnf7asl9-id-jk.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.115Z",
+          "updatedAt": "2025-06-09T19:00:35.115Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff67",
+          "name": "Gorontalo",
+          "code": "ID-GO",
+          "image": "https://image.mypsikolog.id/provinces/1749495630066-4ixec6lrx5-id-go.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff4f",
+          "name": "Jambi",
+          "code": "ID-JA",
+          "image": "https://image.mypsikolog.id/provinces/1749495629989-3sr6pr5lstp-id-ja.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.115Z",
+          "updatedAt": "2025-06-09T19:00:35.115Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff56",
+          "name": "Jawa Barat",
+          "code": "ID-JB",
+          "image": "https://image.mypsikolog.id/provinces/1749495629999-i23r9rmb7t-id-jb.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.115Z",
+          "updatedAt": "2025-06-09T19:00:35.115Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff57",
+          "name": "Jawa Tengah",
+          "code": "ID-JT",
+          "image": "https://image.mypsikolog.id/provinces/1749495630005-ryda8lqdeud-id-jt.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.115Z",
+          "updatedAt": "2025-06-09T19:00:35.115Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff59",
+          "name": "Jawa Timur",
+          "code": "ID-JI",
+          "image": "https://image.mypsikolog.id/provinces/1749495630023-aoay5inla9i-id-ji.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.115Z",
+          "updatedAt": "2025-06-09T19:00:35.115Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff5e",
+          "name": "Kalimantan Barat",
+          "code": "ID-KB",
+          "image": "https://image.mypsikolog.id/provinces/1749495630044-vxkbtup25yr-id-kb.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff60",
+          "name": "Kalimantan Selatan",
+          "code": "ID-KS",
+          "image": "https://image.mypsikolog.id/provinces/1749495630047-7o2qn7rwdye-id-ks.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff5f",
+          "name": "Kalimantan Tengah",
+          "code": "ID-KT",
+          "image": "https://image.mypsikolog.id/provinces/1749495630046-ohzrq34w55i-id-kt.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff61",
+          "name": "Kalimantan Timur",
+          "code": "ID-KI",
+          "image": "https://image.mypsikolog.id/provinces/1749495630053-9v7jldkyqdu-id-ki.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff62",
+          "name": "Kalimantan Utara",
+          "code": "ID-KU",
+          "image": "https://image.mypsikolog.id/provinces/1749495630056-ba43gbqz1t9-id-ku.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff53",
+          "name": "Kepulauan Bangka Belitung",
+          "code": "ID-BB",
+          "image": "https://image.mypsikolog.id/provinces/1749495629996-76cjwedjj55-id-bb.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.115Z",
+          "updatedAt": "2025-06-09T19:00:35.115Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff54",
+          "name": "Kepulauan Riau",
+          "code": "ID-KR",
+          "image": "https://image.mypsikolog.id/provinces/1749495629997-8qswau0bkwh-id-kr.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.115Z",
+          "updatedAt": "2025-06-09T19:00:35.115Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff52",
+          "name": "Lampung",
+          "code": "ID-LA",
+          "image": "https://image.mypsikolog.id/provinces/1749495629995-pcvqpuqd8pd-id-la.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.115Z",
+          "updatedAt": "2025-06-09T19:00:35.115Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff69",
+          "name": "Maluku",
+          "code": "ID-MA",
+          "image": "https://image.mypsikolog.id/provinces/1749495630069-umfgfbookd9-id-ma.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff6a",
+          "name": "Maluku Utara",
+          "code": "ID-MU",
+          "image": "https://image.mypsikolog.id/provinces/1749495630070-fmhtxhbzltm-id-mu.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff5c",
+          "name": "Nusa Tenggara Barat",
+          "code": "ID-NB",
+          "image": "https://image.mypsikolog.id/provinces/1749495630033-qvetghzdwl-id-nb.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.115Z",
+          "updatedAt": "2025-06-09T19:00:35.115Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff5d",
+          "name": "Nusa Tenggara Timur",
+          "code": "ID-NT",
+          "image": "https://image.mypsikolog.id/provinces/1749495630042-8ygr1yeggv9-id-nt.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff6b",
+          "name": "Papua",
+          "code": "ID-PA",
+          "image": "https://image.mypsikolog.id/provinces/1749495630075-9o58he8rjzi-id-pa.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff6c",
+          "name": "Papua Barat",
+          "code": "ID-PB",
+          "image": "https://image.mypsikolog.id/provinces/1749495630078-gsi4aiitb4-id-pb.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff4e",
+          "name": "Riau",
+          "code": "ID-RI",
+          "image": "https://image.mypsikolog.id/provinces/1749495629985-kz9borvvmvq-id-ri.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.114Z",
+          "updatedAt": "2025-06-09T19:00:35.114Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff68",
+          "name": "Sulawesi Barat",
+          "code": "ID-SR",
+          "image": "https://image.mypsikolog.id/provinces/1749495630067-52ryq34hv08-id-sr.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff65",
+          "name": "Sulawesi Selatan",
+          "code": "ID-SN",
+          "image": "https://image.mypsikolog.id/provinces/1749495630063-17khdgtd0nu-id-sn.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff64",
+          "name": "Sulawesi Tengah",
+          "code": "ID-ST",
+          "image": "https://image.mypsikolog.id/provinces/1749495630060-9q32czssj6g-id-st.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff66",
+          "name": "Sulawesi Tenggara",
+          "code": "ID-SG",
+          "image": "https://image.mypsikolog.id/provinces/1749495630064-r96qc6t9798-id-sg.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff63",
+          "name": "Sulawesi Utara",
+          "code": "ID-SA",
+          "image": "https://image.mypsikolog.id/provinces/1749495630058-8ncbqcl3qq-id-sa.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.116Z",
+          "updatedAt": "2025-06-09T19:00:35.116Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff4d",
+          "name": "Sumatera Barat",
+          "code": "ID-SB",
+          "image": "https://image.mypsikolog.id/provinces/1749495629982-lty5tyrqtwi-id-sb.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.114Z",
+          "updatedAt": "2025-06-09T19:00:35.114Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff50",
+          "name": "Sumatera Selatan",
+          "code": "ID-SS",
+          "image": "https://image.mypsikolog.id/provinces/1749495629991-sklvecu2kxj-id-ss.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.115Z",
+          "updatedAt": "2025-06-09T19:00:35.115Z"
+        },
+        {
+          "_id": "68472f532d660ec4ba7dff4c",
+          "name": "Sumatera Utara",
+          "code": "ID-SU",
+          "image": "https://image.mypsikolog.id/provinces/1749495629976-jop04xz6slc-id-su.png",
+          "__v": 0,
+          "createdAt": "2025-06-09T19:00:35.114Z",
+          "updatedAt": "2025-06-09T19:00:35.114Z"
+        }
+      ]
+    },
+    "timestamp": "2025-06-10T03:35:55.720Z"
+  },
+  {
+    "method": "POST",
+    "endpoint": "/provinces",
+    "status": 400,
+    "request": {
+      "name": "Test Province",
+      "code": "TP"
+    },
+    "response": {
+      "message": "Nama, kode, dan gambar provinsi harus diisi"
+    },
+    "timestamp": "2025-06-10T03:35:56.057Z"
+  },
+  {
+    "method": "GET",
+    "endpoint": "/wisata",
+    "status": 200,
+    "request": null,
+    "response": {
+      "data": []
+    },
+    "timestamp": "2025-06-10T03:35:56.278Z"
+  },
+  {
+    "method": "POST",
+    "endpoint": "/wisata",
+    "status": 400,
+    "request": {
+      "nama": "Test Wisata API",
+      "deskripsi": "Wisata test dari API testing",
+      "lokasi": {
+        "alamat": "Jl. Test API No. 1",
+        "koordinat": {
+          "lat": -8.123,
+          "lng": 116.456
+        }
+      },
+      "ticketTypes": [
+        {
+          "name": "Umum",
+          "price": 50000
+        }
+      ],
+      "jamOperasional": {
+        "buka": "08:00",
+        "tutup": "17:00"
+      },
+      "kontak": {
+        "telepon": "081234567890",
+        "email": "info@testwisata.com"
+      }
+    },
+    "response": {
+      "message": "Province ID is required and must be valid"
+    },
+    "timestamp": "2025-06-10T03:35:56.544Z"
+  },
+  {
+    "method": "GET",
+    "endpoint": "/admin/users",
+    "status": 200,
+    "request": null,
+    "response": {
+      "data": [
+        {
+          "_id": "684730e8442f595835432c8c",
+          "nama": "Zakir Sabian",
+          "email": "Ibun_Mangunsong@gmail.com",
+          "telepon": "0888 198 019",
+          "alamat": "Ds. Hasanah no 17",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496037262-f2iywgi2p3u-profiles.png",
+          "role": "pengelola",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:07:20.530Z",
+          "__v": 0
+        },
+        {
+          "_id": "684730e8442f595835432c8e",
+          "nama": "Lalita Lalita Aryanti",
+          "email": "Karna_Saputra@gmail.co.id",
+          "telepon": "0741 7552 7688",
+          "alamat": "Gg. Sabian no 63",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496037252-dxclfcov74g-profiles.png",
+          "role": "pengelola",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:07:20.619Z",
+          "__v": 0
+        },
+        {
+          "_id": "684730e8442f595835432c90",
+          "nama": "Dina Dina Juwita",
+          "email": "Kamaria_Maharani92@gmail.com",
+          "telepon": "(+62) 274 7990 3339",
+          "alamat": "Ki. Novi no 2",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496037317-097bqwln255r-profiles.png",
+          "role": "pengelola",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:07:20.622Z",
+          "__v": 0
+        },
+        {
+          "_id": "684730e8442f595835432c94",
+          "nama": "Yoga Prasetya",
+          "email": "Indira.Yanuar26@gmail.co.id",
+          "telepon": "0406 3155 249",
+          "alamat": "Ki. Hardiansyah no 6",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496037388-8wtaivpvd27-profiles.png",
+          "role": "pengelola",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:07:20.943Z",
+          "__v": 0
+        },
+        {
+          "_id": "684730e8442f595835432c92",
+          "nama": "Indira Handayani",
+          "email": "Vanya.Marbun16@gmail.co.id",
+          "telepon": "(+62) 320 9793 929",
+          "alamat": "Psr. Novi no 57",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496037360-bivl6ecbhqq-profiles.png",
+          "role": "pengelola",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:07:20.926Z",
+          "__v": 0
+        },
+        {
+          "_id": "684730e9442f595835432c96",
+          "nama": "Prayitna Irfandi",
+          "email": "Karya_Ananda@yahoo.com",
+          "telepon": "0804 6201 4198",
+          "alamat": "Dk. Susanti no 40",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496037358-xf6yalc45b-profiles.png",
+          "role": "pengelola",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:07:21.153Z",
+          "__v": 0
+        },
+        {
+          "_id": "684730ec442f595835432c98",
+          "nama": "Hassanah Titin",
+          "email": "Jail24@gmail.com",
+          "telepon": "0390 3474 658",
+          "alamat": "Dk. Warsita no 46",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496037404-lx56857bf5o-profiles.png",
+          "role": "pengelola",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:07:24.164Z",
+          "__v": 0
+        },
+        {
+          "_id": "684730f7442f595835432c9a",
+          "nama": "Gamani Gamani Ahmad",
+          "email": "Gabriella.Padmasari90@yahoo.com",
+          "telepon": "(+62) 790 7648 807",
+          "alamat": "Ds. Karja no 96",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496037366-rea4aacdk4l-profiles.png",
+          "role": "pengelola",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:07:35.130Z",
+          "__v": 0
+        },
+        {
+          "_id": "684730f7442f595835432c9c",
+          "nama": "Purwadi Jais",
+          "email": "Indra14@gmail.co.id",
+          "telepon": "(+62) 388 1893 920",
+          "alamat": "Dk. Mangunsong no 5",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496037337-nbshq3m9s1e-profiles.png",
+          "role": "pengelola",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:07:35.431Z",
+          "__v": 0
+        },
+        {
+          "_id": "684730f8442f595835432c9e",
+          "nama": "Radit Radit Wibowo",
+          "email": "Pranata.Mahendra11@yahoo.com",
+          "telepon": "022 4094 757",
+          "alamat": "Jln. Irfan no 50",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496037264-00fle6qfnhuro-profiles.png",
+          "role": "pengelola",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:07:36.621Z",
+          "__v": 0
+        }
+      ],
+      "totalPages": 17,
+      "currentPage": 1,
+      "totalUsers": 163
+    },
+    "timestamp": "2025-06-10T03:35:56.787Z"
+  },
+  {
+    "method": "GET",
+    "endpoint": "/admin/users?page=1&limit=5&role=pengunjung",
+    "status": 200,
+    "request": null,
+    "response": {
+      "data": [
+        {
+          "_id": "6847312d442f595835432d04",
+          "nama": "Lili Lili Wulandari",
+          "email": "Samsul_Palastri@gmail.com",
+          "telepon": "(+62) 222 0276 1642",
+          "alamat": "Gg. Karya no 57",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496106267-a2usspf5dta-profiles.png",
+          "role": "pengunjung",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:08:29.619Z",
+          "__v": 0
+        },
+        {
+          "_id": "6847312d442f595835432d06",
+          "nama": "Azalea Uyainah",
+          "email": "Febi.Wibisono@yahoo.co.id",
+          "telepon": "(+62) 602 4581 8325",
+          "alamat": "Jr. Megantara no 32",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496106138-r0rydwpq8pj-profiles.png",
+          "role": "pengunjung",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:08:29.865Z",
+          "__v": 0
+        },
+        {
+          "_id": "6847312e442f595835432d08",
+          "nama": "Kayla Kayla Anandya",
+          "email": "Alambana10@gmail.com",
+          "telepon": "0309 1495 1648",
+          "alamat": "Dk. Nimas no 81",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496106198-pb2zkbz4vk-profiles.png",
+          "role": "pengunjung",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:08:30.078Z",
+          "__v": 0
+        },
+        {
+          "_id": "6847313d442f595835432d0a",
+          "nama": "Galih Galih Ardianto",
+          "email": "Omar_Maharani@yahoo.com",
+          "telepon": "0899 6647 3200",
+          "alamat": "Gg. Purnawarman no 8",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496106167-zv3rrdblgw-profiles.png",
+          "role": "pengunjung",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:08:45.261Z",
+          "__v": 0
+        },
+        {
+          "_id": "6847313e442f595835432d0c",
+          "nama": "Cinta Puspita",
+          "email": "Karsa.Prasasta28@yahoo.com",
+          "telepon": "(+62) 557 8087 0621",
+          "alamat": "Psr. Yanuar no 59",
+          "fotoProfil": "https://image.mypsikolog.id/profiles/1749496106364-krnebyec1l-profiles.png",
+          "role": "pengunjung",
+          "statusAkun": "aktif",
+          "tempatWisata": [],
+          "favoritWisata": [],
+          "tickets": [],
+          "createdAt": "2025-06-09T19:08:46.497Z",
+          "__v": 0
+        }
+      ],
+      "totalPages": 21,
+      "currentPage": 1,
+      "totalUsers": 101
+    },
+    "timestamp": "2025-06-10T03:35:57.074Z"
+  },
+  {
+    "method": "GET",
+    "endpoint": "/admin/users/684735cad8dfd8dae86d30f3",
+    "status": 200,
+    "request": null,
+    "response": {
+      "data": {
+        "_id": "684735cad8dfd8dae86d30f3",
+        "nama": "Test Pengunjung",
+        "email": "pengunjung@test.com",
+        "fotoProfil": null,
+        "role": "pengelola",
+        "statusAkun": "nonaktif",
+        "tempatWisata": [],
+        "favoritWisata": [],
+        "tickets": [],
+        "createdAt": "2025-06-09T19:28:10.210Z",
+        "__v": 0
+      }
+    },
+    "timestamp": "2025-06-10T03:35:57.337Z"
+  },
+  {
+    "method": "PUT",
+    "endpoint": "/admin/users/684735cad8dfd8dae86d30f3/role",
+    "status": 200,
+    "request": {
+      "role": "pengelola"
+    },
+    "response": {
+      "message": "User role updated successfully",
+      "data": {
+        "_id": "684735cad8dfd8dae86d30f3",
+        "nama": "Test Pengunjung",
+        "email": "pengunjung@test.com",
+        "fotoProfil": null,
+        "role": "pengelola",
+        "statusAkun": "nonaktif",
+        "tempatWisata": [],
+        "favoritWisata": [],
+        "tickets": [],
+        "createdAt": "2025-06-09T19:28:10.210Z",
+        "__v": 0
+      }
+    },
+    "timestamp": "2025-06-10T03:35:57.570Z"
+  },
+  {
+    "method": "PUT",
+    "endpoint": "/admin/users/684735cad8dfd8dae86d30f3/status",
+    "status": 200,
+    "request": {
+      "statusAkun": "nonaktif"
+    },
+    "response": {
+      "message": "User account status updated to nonaktif",
+      "data": {
+        "_id": "684735cad8dfd8dae86d30f3",
+        "nama": "Test Pengunjung",
+        "email": "pengunjung@test.com",
+        "fotoProfil": null,
+        "role": "pengelola",
+        "statusAkun": "nonaktif",
+        "tempatWisata": [],
+        "favoritWisata": [],
+        "tickets": [],
+        "createdAt": "2025-06-09T19:28:10.210Z",
+        "__v": 0
+      }
+    },
+    "timestamp": "2025-06-10T03:35:57.819Z"
+  },
+  {
+    "method": "POST",
+    "endpoint": "/reviews",
+    "status": 403,
+    "request": {
+      "wisataId": "",
+      "rating": 5,
+      "comment": "Tempat yang sangat indah! Recommended banget."
+    },
+    "response": {
+      "message": "User role pengelola is not authorized to access this route"
+    },
+    "timestamp": "2025-06-10T03:35:58.028Z"
+  },
+  {
+    "method": "GET",
+    "endpoint": "/reviews/my-reviews",
+    "status": 403,
+    "request": null,
+    "response": {
+      "message": "User role pengelola is not authorized to access this route"
+    },
+    "timestamp": "2025-06-10T03:35:58.236Z"
+  },
+  {
+    "method": "GET",
+    "endpoint": "/tickets/my-tickets",
+    "status": 403,
+    "request": null,
+    "response": {
+      "message": "User role pengelola is not authorized to access this route"
+    },
+    "timestamp": "2025-06-10T03:35:58.444Z"
+  }
+]

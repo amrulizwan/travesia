@@ -15,29 +15,19 @@ import { galleryUpload } from '../middlewares/uploadMiddleware.js'; // Corrected
 
 const router = express.Router();
 
-// Public routes (accessible by anyone, even unauthenticated)
-router.get('/', getAllWisata); // Or use protect if all wisata should be behind login
+router.get('/', getAllWisata);
 router.get('/:id', getWisataById);
 router.get('/province/:provinceId', getWisataByProvince);
 
-// Routes for creating, updating, deleting Wisata (Admin and Pengelola)
-router.post(
-  '/',
-  protect,
-  authorizeRoles('admin', 'pengelola'),
-  // galleryUpload.single('namaFieldUntukGambarUtamaWisata'), // If Wisata has a main image uploaded during creation
-  tambahWisata
-);
+router.post('/', protect, authorizeRoles('admin', 'pengelola'), tambahWisata);
 router.put(
   '/:id',
   protect,
   authorizeRoles('admin', 'pengelola'),
-  // galleryUpload.single('namaFieldUntukGambarUtamaWisata'), // If Wisata has a main image updated
   updateWisata
 );
 router.delete('/:id', protect, authorizeRoles('admin', 'pengelola'), hapusWisata);
 
-// Routes for gallery management
 router.post(
   '/:id/gallery',
   protect,

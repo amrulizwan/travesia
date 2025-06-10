@@ -3,6 +3,13 @@ import User from '../models/User.js'; // Added import
 import Province from '../models/Province.js'; // Added import
 import mongoose from 'mongoose'; // Added import
 
+// Helper function to get first verified image from gallery
+const getFirstVerifiedImage = (galeri) => {
+  if (!galeri || galeri.length === 0) return null;
+  const verifiedImage = galeri.find((img) => img.status === 'verified');
+  return verifiedImage ? verifiedImage.url : null;
+};
+
 // Modified tambahWisata
 export const tambahWisata = async (req, res) => {
   try {
@@ -241,11 +248,36 @@ export const verifikasiGambarGaleri = async (req, res) => {
 // 🔹 Ambil semua wisata (public, but with different views for admin/pengelola if needed in future)
 export const getAllWisata = async (req, res) => {
   try {
-    // For now, this is a public route. Filter by status or pengelola can be added.
-    const wisataList = await Wisata.find({ statusPublikasi: 'published' }) // Example: only show published
+    const { page = 1, limit = 10, sort = 'createdAt', order = 'desc' } = req.query;
+
+    const totalItems = await Wisata.countDocuments();
+    const totalPages = Math.ceil(totalItems / limit);
+
+    const wisataList = await Wisata.find()
       .populate('pengelola', 'nama email')
-      .populate('fasilitas'); // Assuming Fasilitas model and refs are set up
-    res.json({ data: wisataList });
+      .populate('province', 'name code')
+      .populate('fasilitas')
+      .sort({ [sort]: order === 'asc' ? 1 : -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    // Add first image to each wisata
+    const wisataWithFirstImage = wisataList.map((wisata) => {
+      const wisataObj = wisata.toObject();
+      wisataObj.firstImage = getFirstVerifiedImage(wisata.galeri);
+      return wisataObj;
+    });
+
+    res.json({
+      data: wisataWithFirstImage,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    });
   } catch (error) {
     console.error('Error in getAllWisata:', error);
     res.status(500).json({ message: 'Terjadi kesalahan server!', error: error.message });
@@ -359,7 +391,6 @@ export const seedProvinces = async (req, res) => {
   }
 };
 
-// 🔹 Ambil wisata berdasarkan province
 export const getWisataByProvince = async (req, res) => {
   try {
     const { provinceId } = req.params;
@@ -374,12 +405,20 @@ export const getWisataByProvince = async (req, res) => {
     const totalPages = Math.ceil(totalItems / limit);
     const wisataList = await Wisata.find(query)
       .populate('province', 'name code')
+      .populate('pengelola', 'nama email')
       .sort({ [sort]: order === 'asc' ? 1 : -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
 
+    // Add first image to each wisata
+    const wisataWithFirstImage = wisataList.map((wisata) => {
+      const wisataObj = wisata.toObject();
+      wisataObj.firstImage = getFirstVerifiedImage(wisata.galeri);
+      return wisataObj;
+    });
+
     res.json({
-      data: wisataList,
+      data: wisataWithFirstImage,
       pagination: {
         currentPage: parseInt(page),
         totalPages,
