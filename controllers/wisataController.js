@@ -2,7 +2,7 @@ import Wisata from '../models/Wisata.js';
 import User from '../models/User.js'; // Added import
 import Province from '../models/Province.js'; // Added import
 import Fasilitas from '../models/Fasilitas.js';
-import mongoose from 'mongoose'; // Added import
+import mongoose from 'mongoose'; // Added imporvt
 
 // Helper function to get first verified image from gallery
 const getFirstVerifiedImage = (galeri) => {
