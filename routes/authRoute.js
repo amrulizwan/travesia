@@ -6,6 +6,7 @@ import { verifyToken } from '../middlewares/authMiddleware.js';
 const router = express.Router();
 
 router.post('/register', profileUpload.single('fotoProfil'), register);
+router.post('/pengelola', profileUpload.single('fotoProfil'), verifyToken, register);
 router.post('/login', login);
 router.post('/request-reset-password', requestResetPassword);
 router.post('/verify-reset-password', verifyResetPassword);

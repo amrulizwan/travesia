@@ -1,0 +1,27 @@
+// login.js
+async function loginUser(email, password) {
+    const response = await fetch('https://trv.aisadev.id/api/auth/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+    });
+
+    if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        window.location.href = '/dashboard.html'; // Redirect to dashboard
+    } else {
+        const errorData = await response.json();
+        alert(errorData.message); // Display error message
+    }
+}
+
+// Event listener for login form submission
+document.getElementById('loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+    loginUser(email, password);
+});
