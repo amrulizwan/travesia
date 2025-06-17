@@ -1,0 +1,233 @@
+/* General Body Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Header Styles */
+header {
+    background-color: #004d40; /* Dark Teal */
+    color: #ffffff;
+    padding: 1.5rem 2rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2rem;
+}
+
+/* Navigation Bar Styles */
+nav {
+    background-color: #00796b; /* Medium Teal */
+    padding: 0.75rem 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+nav ul li {
+    display: inline-block;
+    margin: 0 1rem;
+}
+
+nav ul li a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+nav ul li a:hover, nav ul li a.active {
+    background-color: #004d40; /* Darker Teal for hover/active */
+}
+
+/* Main Content Area */
+main {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 2rem auto;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+main h2 {
+    color: #004d40;
+    border-bottom: 2px solid #00796b;
+    padding-bottom: 0.5rem;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+}
+
+/* Summary Cards on Dashboard */
+.summary-cards {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.card {
+    background-color: #e0f2f1; /* Light Teal */
+    border: 1px solid #b2dfdb; /* Lighter Teal Border */
+    border-radius: 8px;
+    padding: 1.5rem;
+    flex: 1 1 200px; /* Flex properties for responsiveness */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+.card h3 {
+    margin-top: 0;
+    color: #00796b; /* Medium Teal */
+    font-size: 1.25rem;
+}
+
+.card p {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #004d40; /* Dark Teal */
+    margin: 0.5rem 0 0 0;
+}
+
+/* Quick Actions List */
+#quick-actions ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+#quick-actions ul li {
+    margin-bottom: 0.75rem;
+}
+
+#quick-actions ul li a {
+    display: inline-block;
+    background-color: #00796b;
+    color: #ffffff;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+    font-weight: 500;
+}
+
+#quick-actions ul li a:hover {
+    background-color: #004d40;
+}
+
+/* Footer Styles */
+footer {
+    text-align: center;
+    padding: 1.5rem;
+    background-color: #37474f; /* Dark Grey Blue */
+    color: #eceff1; /* Light Grey */
+    margin-top: 2rem;
+}
+
+footer p {
+    margin: 0;
+}
+
+/* Basic Table Styling (for future use in management pages) */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+}
+
+table th, table td {
+    border: 1px solid #ddd;
+    padding: 0.75rem;
+    text-align: left;
+}
+
+table th {
+    background-color: #e0f2f1; /* Light Teal */
+    color: #004d40; /* Dark Teal */
+}
+
+table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+table tr:hover {
+    background-color: #e8f5e9; /* Light Greenish on hover */
+}
+
+/* Basic Form Styling (for future use) */
+form {
+    margin-top: 1rem;
+    padding: 1.5rem;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    border: 1px solid #eee;
+}
+
+form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+form input[type="text"],
+form input[type="email"],
+form input[type="password"],
+form input[type="number"],
+form select,
+form textarea {
+    width: calc(100% - 1.5rem); /* Account for padding */
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+form button[type="submit"] {
+    background-color: #00796b;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+form button[type="submit"]:hover {
+    background-color: #004d40;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    nav ul li {
+        display: block;
+        margin: 0.5rem 0;
+    }
+
+    .summary-cards {
+        flex-direction: column;
+    }
+
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    main {
+        padding: 1rem;
+        margin: 1rem;
+    }
+}

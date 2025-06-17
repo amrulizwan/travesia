@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Travesia</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Travesia Admin Dashboard</h1>
+    </header>
+    <nav>
+        <ul>
+            <li><a href="dashboard.html">Dashboard Home</a></li>
+            <li><a href="users.html">User Management</a></li>
+            <li><a href="provinces.html">Province Management</a></li>
+            <li><a href="wisata.html">Wisata Management</a></li>
+            <li><a href="reviews.html">Review Management</a></li>
+        </ul>
+    </nav>
+    <main>
+        <section id="summary">
+            <h2>Dashboard Summary</h2>
+            <div class="summary-cards">
+                <div class="card">
+                    <h3>Total Users</h3>
+                    <p id="total-users">Loading...</p>
+                </div>
+                <div class="card">
+                    <h3>Total Provinces</h3>
+                    <p id="total-provinces">Loading...</p>
+                </div>
+                <div class="card">
+                    <h3>Total Wisata</h3>
+                    <p id="total-wisata">Loading...</p>
+                </div>
+                <div class="card">
+                    <h3>Pending Reviews</h3>
+                    <p id="pending-reviews">Loading...</p>
+                </div>
+            </div>
+        </section>
+        <section id="quick-actions">
+            <h2>Quick Actions</h2>
+            <ul>
+                <li><a href="users.html#add-user">Add New User</a></li>
+                <li><a href="provinces.html#add-province">Add New Province</a></li>
+                <li><a href="wisata.html#add-wisata">Add New Wisata Destination</a></li>
+            </ul>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Travesia Admin Panel</p>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>
